@@ -182,7 +182,7 @@ a:focus-visible {
   height: 34px;
   display: flex;
   border-bottom: 1px solid var(--line);
-  background: var(--card);
+  background: var(--page); /* 日期列：米白 */
 }
 
 .tl-corner {
@@ -191,7 +191,7 @@ a:focus-visible {
   z-index: 5;
   flex: none;
   width: 30px;
-  background: var(--card);
+  background: var(--page);
 }
 
 .tl-head-grid {
