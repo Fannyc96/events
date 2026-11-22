@@ -53,6 +53,8 @@ create policy "anyone deletes" on public.events
   for delete using (status in ('approved', 'pending'));
 
 grant select, insert, update, delete on public.events to anon, authenticated;
+-- 自動搜尋腳本用 service role（secret key）讀寫，需要另外授權
+grant select, insert, update, delete on public.events to service_role;
 
 create or replace function public.touch_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end; $$;

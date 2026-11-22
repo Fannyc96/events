@@ -21,6 +21,8 @@ create policy "anyone deletes" on public.events
   for delete using (status in ('approved', 'pending'));
 
 grant select, insert, update, delete on public.events to anon, authenticated;
+-- 自動搜尋腳本用 service role（secret key）讀寫，需要另外授權
+grant select, insert, update, delete on public.events to service_role;
 
 -- 不再需要管理者機制
 drop policy if exists "admin reads admins" on public.admins;
