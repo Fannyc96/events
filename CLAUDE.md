@@ -49,6 +49,8 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 - 範圍只有「雙週」和「年」（2026-11-22 拿掉月視圖，見 SPEC 4.1 的變更）。程式裡 `Scale = 'week'` 代表雙週，週數由 `dates.ts` 的 `WEEK_SPAN` 控制；兩週之間有淡灰分隔線（`.week-divider`）。
 - 尺寸照原型：雙週／年每欄 104px、分類標籤 30px、頂部列 52px、欄標題 34px。
 - 6 個分類列平分畫面高度，永遠不垂直捲動；卡片排 `minmax(26px, 38px)`，畫面高度 ≤ 805px 時卡片文字只顯示 1 行。
+- **主色 `--primary`（暫定 #77969A）**：主要按鈕（儲存、立即搜尋、核准、回到今天）、選中狀態（表單 chip、雙週／年切換）、右下 ＋、開關。瑠璃藍 `--blue` 只用在連結與「今天」。
+- 表單：欄位標題 16px 粗體、輸入與按鈕文字 16px（iPhone 小於 16px 會自動放大）；必填欄位加黑色 `*`。
 - 刪除前一定要先確認（`ConfirmDialog`）。
 - UI 文字用繁體中文。
 - **金鑰不進 git**：`.env.local` 已被 ignore；GitHub 上用 repo Secrets `VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY`。`SUPABASE_SERVICE_ROLE_KEY`、`CLAUDE_CODE_OAUTH_TOKEN` 只能放在 GitHub Secrets；`GH_DISPATCH_TOKEN` 只放在 Supabase Edge Function Secrets。這些絕不能出現在前端。

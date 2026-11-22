@@ -6,7 +6,8 @@
   --page: #fcfaf2; /* 白練：頁面背景 */
   --card: #fffffb; /* 胡粉：卡片白底 */
   --line: #bdc0ba; /* 白鼠：分隔線、輸入框框線 */
-  --blue: #005caf; /* 瑠璃：連結、今天、主要按鈕 */
+  --blue: #005caf; /* 瑠璃：連結、今天 */
+  --primary: #77969a; /* 主色（暫定）：主要按鈕、選中狀態、＋按鈕、開關 */
   --blue-dark: #0b346e;
   --red: #cb1b45; /* 紅：待審核徽章、刪除 */
   --muted-day: #91989f; /* 小日曆：不屬於該月的日期 */
@@ -135,7 +136,7 @@ a:focus-visible {
 }
 
 .seg button[aria-pressed='true'] {
-  background: var(--ink);
+  background: var(--primary);
   color: var(--card);
   font-weight: 700;
 }
@@ -391,7 +392,7 @@ a:focus-visible {
   height: 52px;
   border-radius: 26px;
   border: none;
-  background: var(--ink);
+  background: var(--primary);
   color: var(--card);
   cursor: pointer;
   display: flex;
@@ -594,7 +595,7 @@ a:focus-visible {
   transition: left 0.15s;
 }
 .switch-row[aria-checked='true'] .switch {
-  background: var(--ink);
+  background: var(--primary);
 }
 .switch-row[aria-checked='true'] .switch::after {
   left: 21px;
@@ -637,7 +638,7 @@ a:focus-visible {
 }
 .btn-primary {
   border: none;
-  background: var(--blue);
+  background: var(--primary);
   color: var(--card);
   font-weight: 700;
 }
@@ -650,9 +651,9 @@ a:focus-visible {
 .btn-danger-text {
   color: var(--red);
 }
-.btn-outline-blue {
-  border-color: var(--blue);
-  color: var(--blue);
+.btn-outline-primary {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* ---------- 底部彈出層 ---------- */
@@ -803,14 +804,13 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* 欄位標題（18px）大於框內文字（16px） */
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
   min-width: 0;
 }
 .req {
-  color: var(--red);
+  color: var(--ink);
   margin-left: 2px;
 }
 .field input,
@@ -864,9 +864,9 @@ a:focus-visible {
   border: 1px solid var(--line);
 }
 .chip[aria-pressed='true'] {
-  background: var(--blue);
+  background: var(--primary);
   color: var(--card);
-  border-color: var(--blue);
+  border-color: var(--primary);
   font-weight: 700;
 }
 .form-error {

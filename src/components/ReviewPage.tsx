@@ -94,7 +94,7 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
                   <button className="btn" disabled={busy} onClick={() => onSkip(p)}>
                     略過
                   </button>
-                  <button className="btn btn-outline-blue" disabled={busy} onClick={() => onEdit(p)}>
+                  <button className="btn btn-outline-primary" disabled={busy} onClick={() => onEdit(p)}>
                     編輯
                   </button>
                   <button className="btn btn-primary" disabled={busy} onClick={() => onApprove(p)}>

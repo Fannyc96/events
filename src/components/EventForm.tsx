@@ -28,10 +28,12 @@ const Req = () => (
 );
 
 function Chips<T>({ label, options, value, onPick }: { label: string; options: [T, string][]; value: T; onPick: (v: T) => void }) {
+  // 這幾組一定有選中的值，都算必填
   return (
-    <div role="group" aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <span className="field" style={{ gap: 0 }}>
+    <div role="group" aria-label={`${label}（必填）`} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <span className="field" style={{ gap: 0, display: 'block' }}>
         {label}
+        <Req />
       </span>
       <div className="chips">
         {options.map(([v, text]) => (
