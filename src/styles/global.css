@@ -624,7 +624,7 @@ a:focus-visible {
 .btn {
   height: 48px;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 16px; /* 與輸入框文字一致 */
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--line);
@@ -803,10 +803,15 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-3);
+  /* 欄位標題（18px）大於框內文字（16px） */
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
   min-width: 0;
+}
+.req {
+  color: var(--red);
+  margin-left: 2px;
 }
 .field input,
 .field textarea {
@@ -823,15 +828,18 @@ a:focus-visible {
 }
 .field input[type='date'] {
   padding: 0 10px;
+  width: 150px;
+  max-width: 100%;
 }
 .field textarea {
-  height: auto;
+  /* 原本 4 行（約 118px）的 2/3 */
+  height: 79px;
   padding: 10px 12px;
   resize: vertical;
   line-height: 1.5;
 }
 .field-hint {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--ink-2);
 }
@@ -849,16 +857,16 @@ a:focus-visible {
   min-height: 40px;
   padding: 0 12px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 16px; /* 與輸入框文字一致 */
   cursor: pointer;
   background: var(--card);
   color: var(--ink-3);
   border: 1px solid var(--line);
 }
 .chip[aria-pressed='true'] {
-  background: var(--ink);
+  background: var(--blue);
   color: var(--card);
-  border-color: var(--ink);
+  border-color: var(--blue);
   font-weight: 700;
 }
 .form-error {

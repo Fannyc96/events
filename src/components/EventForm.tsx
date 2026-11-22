@@ -21,6 +21,12 @@ const PRECS: [Precision, string][] = [
   ['approx', '大致區間'],
 ];
 
+const Req = () => (
+  <span className="req" aria-hidden="true">
+    *
+  </span>
+);
+
 function Chips<T>({ label, options, value, onPick }: { label: string; options: [T, string][]; value: T; onPick: (v: T) => void }) {
   return (
     <div role="group" aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -75,24 +81,30 @@ export function EventForm({ mode, initial, busy, onSave, onClose }: Props) {
     >
       <form className="form-body" onSubmit={(e) => (e.preventDefault(), save())}>
         <label className="field">
-          標題
-          <input type="text" required value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="例：Summit、漢光演習" />
+          <span>
+            標題
+            <Req />
+          </span>
+          <input type="text" required value={f.title} onChange={(e) => set('title', e.target.value)} />
         </label>
         <div className="two-col">
           <label className="field">
             Stakeholder
-            <input type="text" value={f.stakeholder} onChange={(e) => set('stakeholder', e.target.value)} placeholder="例：美中、G7" />
+            <input type="text" value={f.stakeholder} onChange={(e) => set('stakeholder', e.target.value)} />
           </label>
           <label className="field">
             地點
-            <input type="text" value={f.location} onChange={(e) => set('location', e.target.value)} placeholder="選填" />
+            <input type="text" value={f.location} onChange={(e) => set('location', e.target.value)} />
           </label>
         </div>
         <Chips label="分類" options={CATEGORIES.map((c) => [c.id, c.name])} value={f.category} onPick={(v) => set('category', v)} />
         <Chips label="日期類型" options={PRECS} value={f.precision} onPick={(v) => set('precision', v)} />
         <div className="two-col">
           <label className="field">
-            開始日
+            <span>
+              開始日
+              <Req />
+            </span>
             <input type="date" required value={f.start} onChange={(e) => set('start', e.target.value)} />
           </label>
           {f.precision !== 'day' && (
@@ -105,8 +117,8 @@ export function EventForm({ mode, initial, busy, onSave, onClose }: Props) {
         {f.precision === 'approx' && (
           <label className="field">
             顯示文字
-            <input type="text" value={f.label} onChange={(e) => set('label', e.target.value)} placeholder="例：Aug/Sep、春、上半年" />
-            <span className="field-hint">大致區間用開始／結束日定位，畫面上顯示這段文字；留空就用日期範圍自動產生</span>
+            <input type="text" value={f.label} onChange={(e) => set('label', e.target.value)} />
+            <span className="field-hint">畫面上顯示這段文字（如 Aug/Sep、春、上半年），位置用開始／結束日決定；留空就用日期範圍自動產生</span>
           </label>
         )}
         <div className="two-col">
@@ -115,7 +127,7 @@ export function EventForm({ mode, initial, busy, onSave, onClose }: Props) {
         </div>
         <label className="field">
           備註
-          <textarea rows={4} value={f.note} onChange={(e) => set('note', e.target.value)} placeholder="選填，點開事件時才顯示" />
+          <textarea value={f.note} onChange={(e) => set('note', e.target.value)} />
         </label>
         {error && (
           <p role="alert" className="form-error">
