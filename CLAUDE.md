@@ -49,8 +49,11 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 - 範圍只有「雙週」和「年」（2026-11-22 拿掉月視圖，見 SPEC 4.1 的變更）。程式裡 `Scale = 'week'` 代表雙週，週數由 `dates.ts` 的 `WEEK_SPAN` 控制；兩週之間有淡灰分隔線（`.week-divider`）。
 - 尺寸照原型：雙週／年每欄 104px、分類標籤 30px、頂部列 52px、欄標題 34px。
 - 6 個分類列平分畫面高度，永遠不垂直捲動；卡片排 `minmax(26px, 38px)`，畫面高度 ≤ 805px 時卡片文字只顯示 1 行。
-- **主色 `--primary`（暫定 #77969A）**：主要按鈕（儲存、立即搜尋、核准、回到今天）、選中狀態（表單 chip、雙週／年切換）、右下 ＋、開關。瑠璃藍 `--blue` 只用在連結與「今天」。
-- 表單：欄位標題 16px 粗體、輸入與按鈕文字 16px（iPhone 小於 16px 會自動放大）；必填欄位加黑色 `*`。
+- **主色 `--primary`（暫定 #77969A）**：所有主要按鈕（儲存、編輯、立即搜尋、核准、回到今天）、所有選中狀態（表單 chip、雙週／年、小日曆）、右下 ＋、開關、「今天」欄、連結。不要再寫死其他強調色。
+- **背景色 `--bg`（暫定 #A5DEE4）**：頁首（時間軸頂部列、待審核頁標題列）與 stakeholder 標籤底色，兩者連動。頁面本體仍是白練 `--page`。
+- 表單：欄位標題、輸入、按鈕文字都是 14px（粗體的維持粗體）；必填欄位加黑色 `*`。為避免 iPhone 點輸入框自動放大，viewport 設了 `maximum-scale=1`。
+- 底部面板（詳情、表單）的兩個按鈕：一左一右，各約半寬的 60%。
+- 詳情：分類名稱用分類主色＋粗體；標題下的 tag 只顯示「未確定」（透明底虛線框）與「重要」（分類淺色底）；資料只列日期（只有 date_label）、地點、備註（無框）。
 - 刪除前一定要先確認（`ConfirmDialog`）。
 - UI 文字用繁體中文。
 - **金鑰不進 git**：`.env.local` 已被 ignore；GitHub 上用 repo Secrets `VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY`。`SUPABASE_SERVICE_ROLE_KEY`、`CLAUDE_CODE_OAUTH_TOKEN` 只能放在 GitHub Secrets；`GH_DISPATCH_TOKEN` 只放在 Supabase Edge Function Secrets。這些絕不能出現在前端。

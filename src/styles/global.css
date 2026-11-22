@@ -6,9 +6,9 @@
   --page: #fcfaf2; /* 白練：頁面背景 */
   --card: #fffffb; /* 胡粉：卡片白底 */
   --line: #bdc0ba; /* 白鼠：分隔線、輸入框框線 */
-  --blue: #005caf; /* 瑠璃：連結、今天 */
-  --primary: #77969a; /* 主色（暫定）：主要按鈕、選中狀態、＋按鈕、開關 */
-  --blue-dark: #0b346e;
+  --primary: #77969a; /* 主色（暫定）：主要按鈕、選中狀態、＋、開關、今天、連結 */
+  --bg: #a5dee4; /* 背景色（暫定）：頁首、stakeholder 標籤 */
+  --blue-dark: #0b346e; /* 只用在待審核「AI 建議」標籤 */
   --red: #cb1b45; /* 紅：待審核徽章、刪除 */
   --muted-day: #91989f; /* 小日曆：不屬於該月的日期 */
   --fade: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
@@ -37,10 +37,10 @@ body {
 }
 
 a {
-  color: var(--blue);
+  color: var(--primary);
 }
 a:hover {
-  color: var(--blue-dark);
+  color: color-mix(in srgb, var(--primary) 70%, #000);
 }
 
 button {
@@ -52,7 +52,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -91,7 +91,7 @@ a:focus-visible {
   align-items: center;
   gap: 2px;
   padding: 6px 6px 6px 4px;
-  background: var(--page);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 
@@ -214,7 +214,7 @@ a:focus-visible {
   color: var(--ink-2);
 }
 .tl-head-cell.today {
-  background: var(--blue);
+  background: var(--primary);
   color: var(--card);
 }
 .tl-head-top {
@@ -343,8 +343,9 @@ a:focus-visible {
   bottom: 0;
   z-index: 1;
   pointer-events: none;
-  background: rgba(0, 92, 175, 0.06);
-  box-shadow: inset 1.5px 0 0 rgba(0, 92, 175, 0.5), inset -1.5px 0 0 rgba(0, 92, 175, 0.5);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  box-shadow: inset 1.5px 0 0 color-mix(in srgb, var(--primary) 60%, transparent),
+    inset -1.5px 0 0 color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 .week-divider {
@@ -481,7 +482,7 @@ a:focus-visible {
   background: transparent;
 }
 .picker-week[aria-pressed='true'] {
-  background: var(--ink);
+  background: var(--primary);
 }
 
 .picker-day {
@@ -502,7 +503,7 @@ a:focus-visible {
   color: var(--card);
 }
 .picker-day.today {
-  box-shadow: inset 0 0 0 2px var(--blue);
+  box-shadow: inset 0 0 0 2px var(--primary);
   font-weight: 700;
 }
 .picker-week[aria-pressed='true'] .picker-day.today {
@@ -524,12 +525,12 @@ a:focus-visible {
   border: 1px solid var(--line);
 }
 .picker-cell.today {
-  border-color: var(--blue);
+  border-color: var(--primary);
   font-weight: 700;
-  box-shadow: inset 0 0 0 1px var(--blue);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 .picker-cell[aria-pressed='true'] {
-  background: var(--ink);
+  background: var(--primary);
   color: var(--card);
   font-weight: 700;
   border: none;
@@ -642,12 +643,6 @@ a:focus-visible {
   color: var(--card);
   font-weight: 700;
 }
-.btn-dark {
-  border: none;
-  background: var(--ink);
-  color: var(--card);
-  font-weight: 700;
-}
 .btn-danger-text {
   color: var(--red);
 }
@@ -708,11 +703,16 @@ a:focus-visible {
 }
 .sheet-foot {
   flex: none;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  justify-content: space-between; /* 一個靠左、一個靠右 */
   gap: 8px;
   padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
+}
+/* 兩個按鈕各約原本（半寬）的 60% */
+.sheet-foot .btn {
+  flex: 0 0 calc((100% - 8px) / 2 * 0.6);
+  font-size: 14px;
 }
 
 .swatch {
@@ -725,8 +725,8 @@ a:focus-visible {
 .who-tag {
   font-size: 14px;
   font-weight: 700;
-  color: var(--ink-3);
-  background: var(--page);
+  color: var(--ink);
+  background: var(--bg);
   padding: 2px 8px;
   border-radius: 6px;
   margin-right: 8px;
@@ -745,7 +745,21 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--ink-3);
+  font-weight: 700; /* 文字顏色＝分類主色（inline） */
+}
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: -6px;
+}
+.tag {
+  font-size: 13px;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--ink);
+  background: transparent;
 }
 .detail-title {
   margin: 0;
@@ -771,11 +785,6 @@ a:focus-visible {
 }
 .note-box {
   white-space: pre-line;
-  background: var(--page);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
 }
 
 /* 清單 */
@@ -804,7 +813,7 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink);
   min-width: 0;
@@ -819,7 +828,7 @@ a:focus-visible {
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 14px;
   font-family: inherit;
   color: var(--ink);
   background: var(--card);
@@ -857,7 +866,7 @@ a:focus-visible {
   min-height: 40px;
   padding: 0 12px;
   border-radius: 10px;
-  font-size: 16px; /* 與輸入框文字一致 */
+  font-size: 14px; /* 與輸入框文字一致 */
   cursor: pointer;
   background: var(--card);
   color: var(--ink-3);
@@ -887,6 +896,7 @@ a:focus-visible {
 }
 .review-bar {
   flex: none;
+  background: var(--bg);
   height: 52px;
   display: flex;
   align-items: center;
