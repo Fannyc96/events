@@ -35,7 +35,7 @@ export function EventDetail({ event: e, onClose, onEdit, onDelete }: Props) {
     >
       <div className="detail-body">
         <h2 className="detail-title">
-          {e.stakeholder && <span className="who-tag">{e.stakeholder}</span>}
+          {e.stakeholder && <span className="who-tag" style={{ background: cat.light }}>{e.stakeholder}</span>}
           {e.title}
         </h2>
         {hasTags && (

@@ -7,7 +7,6 @@
   --card: #fffffb; /* 胡粉：卡片白底 */
   --line: #bdc0ba; /* 白鼠：分隔線、輸入框框線 */
   --primary: #77969a; /* 主色（暫定）：主要按鈕、選中狀態、＋、開關、今天、連結 */
-  --bg: #a5dee4; /* 背景色（暫定）：頁首、stakeholder 標籤 */
   --blue-dark: #0b346e; /* 只用在待審核「AI 建議」標籤 */
   --red: #cb1b45; /* 紅：待審核徽章、刪除 */
   --muted-day: #91989f; /* 小日曆：不屬於該月的日期 */
@@ -92,7 +91,7 @@ a:focus-visible {
   align-items: center;
   gap: 2px;
   padding: 6px 6px calc(6px + env(safe-area-inset-bottom)) 4px;
-  background: var(--bg);
+  background: var(--page);
   border-top: 1px solid var(--line);
 }
 
@@ -728,7 +727,7 @@ a:focus-visible {
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
-  background: var(--bg);
+  /* 底色＝分類淺色（inline） */
   padding: 2px 8px;
   border-radius: 6px;
   margin-right: 8px;
@@ -898,7 +897,7 @@ a:focus-visible {
 }
 .review-bar {
   flex: none;
-  background: var(--bg);
+  background: var(--page);
   height: calc(52px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;

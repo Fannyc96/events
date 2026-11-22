@@ -53,7 +53,7 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
                   {p.ai_reason && <span style={{ color: 'var(--ink-2)' }}>{p.ai_reason}</span>}
                 </div>
                 <h2>
-                  {p.stakeholder && <span className="who-tag">{p.stakeholder}</span>}
+                  {p.stakeholder && <span className="who-tag" style={{ background: cat.light }}>{p.stakeholder}</span>}
                   {p.title}
                 </h2>
                 <dl className="dl">
