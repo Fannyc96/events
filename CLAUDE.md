@@ -46,7 +46,8 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 - 日期一律用 `YYYY-MM-DD` 字串，轉 Date 用 `parseDate()`（本地午夜），不要用 `new Date('2026-11-21')`（會變成 UTC）。「今天」以裝置本地時間為準。
 - 分類的順序與顏色只在 `src/lib/categories.ts`；中性色在 `global.css` 的 `:root`。顏色都取自 nipponcolors.com。
 - 樣式：固定的東西寫 class，依資料變動的值（grid-column、分類色）才用 inline style。
-- 尺寸照原型：週／年每欄 104px、月 76px、分類標籤 30px、頂部列 52px、欄標題 34px。
+- 範圍只有「雙週」和「年」（2026-11-22 拿掉月視圖，見 SPEC 4.1 的變更）。程式裡 `Scale = 'week'` 代表雙週，週數由 `dates.ts` 的 `WEEK_SPAN` 控制；兩週之間有淡灰分隔線（`.week-divider`）。
+- 尺寸照原型：雙週／年每欄 104px、分類標籤 30px、頂部列 52px、欄標題 34px。
 - 6 個分類列平分畫面高度，永遠不垂直捲動；卡片排 `minmax(26px, 38px)`，畫面高度 ≤ 805px 時卡片文字只顯示 1 行。
 - 刪除前一定要先確認（`ConfirmDialog`）。
 - UI 文字用繁體中文。

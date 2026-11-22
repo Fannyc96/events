@@ -13,7 +13,7 @@ interface Props {
 
 const HEADS = ['一', '二', '三', '四', '五', '六', '日'];
 
-/** 小日曆（SPEC 4.5）：週＝月曆每列一週；月＝12 個月；年＝12 個年份（−4…+7） */
+/** 小日曆（SPEC 4.5）：雙週＝月曆每列一週（點一列＝從那週開始的兩週）；年＝12 個年份（−4…+7） */
 export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
   const [cur, setCur] = useState(anchor);
   const cd = parseDate(cur);
@@ -24,11 +24,7 @@ export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
 
   const step = (dir: number) => {
     const nx =
-      scale === 'week'
-        ? new Date(py, pm + dir, 1)
-        : scale === 'month'
-          ? new Date(py + dir, 0, 1)
-          : new Date(py + 12 * dir, 0, 1);
+      scale === 'week' ? new Date(py, pm + dir, 1) : new Date(py + 12 * dir, 0, 1);
     setCur(toIso(nx));
   };
 
@@ -53,7 +49,8 @@ export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
           ))}
         </div>
         {rows.map((mon) => {
-          const sel = toIso(mon) === toIso(aw.start);
+          // 目前顯示的兩週都反黑
+          const sel = mon >= aw.start && mon <= aw.end;
           const end = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
           return (
             <button
@@ -72,21 +69,6 @@ export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
                   </span>
                 );
               })}
-            </button>
-          );
-        })}
-      </div>
-    );
-  } else if (scale === 'month') {
-    title = `${py} 年`;
-    body = (
-      <div className="picker-grid">
-        {Array.from({ length: 12 }, (_, q) => {
-          const sel = aw.start.getFullYear() === py && aw.start.getMonth() === q;
-          const isT = t.getFullYear() === py && t.getMonth() === q;
-          return (
-            <button key={q} className={`picker-cell${isT ? ' today' : ''}`} aria-pressed={sel} onClick={() => onPick(toIso(new Date(py, q, 1)))}>
-              {q + 1} 月
             </button>
           );
         })}

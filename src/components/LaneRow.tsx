@@ -21,7 +21,7 @@ export function LaneRow({ cat, layout, cols, scale, gridStyle, onOpenEvent, onOp
   const { band, cards, more } = layout;
 
   const colName = (col: number) =>
-    scale === 'year' ? `${col + 1} 月` : cols[col].top + (scale === 'month' ? ' 日' : '');
+    scale === 'year' ? `${col + 1} 月` : cols[col].top;
 
   return (
     <div className="lane" style={{ background: cat.main + '0F' }}>

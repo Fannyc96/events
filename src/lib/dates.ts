@@ -2,6 +2,8 @@ import type { Precision, Scale } from './types';
 
 // 所有日期都以「本地時間的午夜」表示，避免 UTC 位移造成差一天。
 export const DAY_MS = 86400000;
+/** 週視圖一次顯示幾週 */
+export const WEEK_SPAN = 2;
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
 export function parseDate(s: string): Date {
@@ -49,13 +51,11 @@ export function windowOf(scale: Scale, anchorIso: string): Window {
   if (scale === 'year') {
     start = new Date(a.getFullYear(), 0, 1);
     end = new Date(a.getFullYear(), 11, 31);
-  } else if (scale === 'month') {
-    start = new Date(a.getFullYear(), a.getMonth(), 1);
-    end = new Date(a.getFullYear(), a.getMonth() + 1, 0);
   } else {
+    // 雙週：anchor 所在那週的週一開始，共 14 天（這週＋隔週）
     const dow = (a.getDay() + 6) % 7; // 週一 = 0
     start = new Date(a.getFullYear(), a.getMonth(), a.getDate() - dow);
-    end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+    end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + WEEK_SPAN * 7 - 1);
   }
   return { scale, start, end, days: daysBetween(start, end) + 1 };
 }
@@ -63,8 +63,7 @@ export function windowOf(scale: Scale, anchorIso: string): Window {
 export function shiftAnchor(scale: Scale, anchorIso: string, dir: number): string {
   const a = parseDate(anchorIso);
   if (scale === 'year') return toIso(new Date(a.getFullYear() + dir, a.getMonth(), 1));
-  if (scale === 'month') return toIso(new Date(a.getFullYear(), a.getMonth() + dir, 1));
-  return toIso(new Date(a.getFullYear(), a.getMonth(), a.getDate() + 7 * dir));
+  return toIso(new Date(a.getFullYear(), a.getMonth(), a.getDate() + WEEK_SPAN * 7 * dir));
 }
 
 export interface Column {
@@ -91,7 +90,7 @@ export function buildColumns(win: Window, today: string): Column[] {
   for (let i = 0; i < win.days; i++) {
     const d = new Date(win.start.getFullYear(), win.start.getMonth(), win.start.getDate() + i);
     cols.push({
-      top: win.scale === 'week' ? md(d) : String(d.getDate()),
+      top: md(d),
       sub: WEEKDAYS[d.getDay()],
       today: toIso(d) === today,
       weekend: d.getDay() === 0 || d.getDay() === 6,
@@ -101,7 +100,7 @@ export function buildColumns(win: Window, today: string): Column[] {
 }
 
 /**
- * 日期落在第幾欄。年視圖以月份為欄；範圍之前回傳 -1 以下、之後回傳 ≥ 欄數，
+ * 日期落在第幾欄。雙週視圖以日為欄、年視圖以月份為欄；範圍之前回傳 -1 以下、之後回傳 ≥ 欄數，
  * 由呼叫端夾到範圍內並判斷是否被切斷。
  */
 export function columnOf(d: Date, win: Window): number {
@@ -114,10 +113,9 @@ export function columnOf(d: Date, win: Window): number {
   return daysBetween(win.start, d);
 }
 
-/** 頂部列的日期標題：11/16–22、11/30–12/6、2026/11、2026 */
+/** 頂部列的日期標題：11/16–29、11/30–12/13、2026 */
 export function titleShort(win: Window): string {
   if (win.scale === 'year') return String(win.start.getFullYear());
-  if (win.scale === 'month') return `${win.start.getFullYear()}/${win.start.getMonth() + 1}`;
   const s = win.start;
   const e = win.end;
   return s.getMonth() === e.getMonth() ? `${md(s)}–${e.getDate()}` : `${md(s)}–${md(e)}`;
@@ -126,7 +124,6 @@ export function titleShort(win: Window): string {
 /** 給螢幕閱讀器的完整標題 */
 export function titleFull(win: Window): string {
   if (win.scale === 'year') return `${win.start.getFullYear()} 年`;
-  if (win.scale === 'month') return `${win.start.getFullYear()} 年 ${win.start.getMonth() + 1} 月`;
   return `${ymd(win.start)} – ${md(win.end)}`;
 }
 

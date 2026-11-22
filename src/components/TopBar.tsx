@@ -17,8 +17,7 @@ interface Props {
 }
 
 const SCALES: [Scale, string][] = [
-  ['week', '週'],
-  ['month', '月'],
+  ['week', '雙週'],
   ['year', '年'],
 ];
 

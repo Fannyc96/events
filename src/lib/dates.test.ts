@@ -12,22 +12,22 @@ import {
 } from './dates';
 
 describe('windowOf', () => {
-  it('週：週一到週日', () => {
+  it('雙週：這週的週一開始，到隔週週日，共 14 天', () => {
     const w = windowOf('week', '2026-11-21'); // 週六
     expect(toIso(w.start)).toBe('2026-11-16');
-    expect(toIso(w.end)).toBe('2026-11-22');
-    expect(w.days).toBe(7);
+    expect(toIso(w.end)).toBe('2026-11-29');
+    expect(w.days).toBe(14);
   });
 
-  it('週：週日屬於前一個週一開始的那週', () => {
+  it('雙週：週日屬於前一個週一開始的那週', () => {
     const w = windowOf('week', '2026-11-22');
     expect(toIso(w.start)).toBe('2026-11-16');
   });
 
-  it('月：1 日到月底（含閏年 2 月）', () => {
-    expect(windowOf('month', '2026-11-21').days).toBe(30);
-    expect(windowOf('month', '2028-02-10').days).toBe(29);
-    expect(toIso(windowOf('month', '2026-02-10').end)).toBe('2026-02-28');
+  it('雙週：跨月、跨年', () => {
+    const w = windowOf('week', '2026-12-30');
+    expect(toIso(w.start)).toBe('2026-12-28');
+    expect(toIso(w.end)).toBe('2027-01-10');
   });
 
   it('年：1/1 到 12/31', () => {
@@ -39,38 +39,33 @@ describe('windowOf', () => {
 });
 
 describe('shiftAnchor', () => {
-  it('週 ±7 天、月 ±1 月、年 ±1 年', () => {
-    expect(shiftAnchor('week', '2026-11-21', 1)).toBe('2026-11-28');
-    expect(shiftAnchor('week', '2026-11-21', -1)).toBe('2026-11-14');
-    expect(shiftAnchor('month', '2026-01-31', 1)).toBe('2026-02-01');
-    expect(shiftAnchor('month', '2026-01-15', -1)).toBe('2025-12-01');
+  it('雙週 ±14 天、年 ±1 年', () => {
+    expect(shiftAnchor('week', '2026-11-21', 1)).toBe('2026-12-05');
+    expect(shiftAnchor('week', '2026-11-21', -1)).toBe('2026-11-07');
+    expect(toIso(windowOf('week', shiftAnchor('week', '2026-11-21', 1)).start)).toBe('2026-11-30');
     expect(shiftAnchor('year', '2026-11-21', 1)).toBe('2027-11-01');
   });
 });
 
 describe('titleShort', () => {
-  it('週：同月與跨月', () => {
-    expect(titleShort(windowOf('week', '2026-11-18'))).toBe('11/16–22');
-    expect(titleShort(windowOf('week', '2026-12-02'))).toBe('11/30–12/6');
+  it('雙週：同月與跨月', () => {
+    expect(titleShort(windowOf('week', '2026-11-04'))).toBe('11/2–15');
+    expect(titleShort(windowOf('week', '2026-11-18'))).toBe('11/16–29');
+    expect(titleShort(windowOf('week', '2026-12-02'))).toBe('11/30–12/13');
   });
-  it('月與年', () => {
-    expect(titleShort(windowOf('month', '2026-11-18'))).toBe('2026/11');
+  it('年', () => {
     expect(titleShort(windowOf('year', '2026-11-18'))).toBe('2026');
   });
 });
 
 describe('buildColumns', () => {
-  it('週視圖：標題、星期、今天、週末', () => {
+  it('雙週視圖：14 欄，標題、星期、今天、週末', () => {
     const cols = buildColumns(windowOf('week', '2026-11-21'), '2026-11-21');
-    expect(cols).toHaveLength(7);
+    expect(cols).toHaveLength(14);
     expect(cols[0]).toMatchObject({ top: '11/16', sub: '一', today: false, weekend: false });
     expect(cols[5]).toMatchObject({ top: '11/21', sub: '六', today: true, weekend: true });
-  });
-
-  it('月視圖：只有日期數字', () => {
-    const cols = buildColumns(windowOf('month', '2026-11-01'), '2026-11-21');
-    expect(cols).toHaveLength(30);
-    expect(cols[15]).toMatchObject({ top: '16', sub: '一' });
+    expect(cols[7]).toMatchObject({ top: '11/23', sub: '一' });
+    expect(cols[13]).toMatchObject({ top: '11/29', sub: '日', weekend: true });
   });
 
   it('年視圖：12 個月，今天所在月份', () => {

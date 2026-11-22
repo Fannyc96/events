@@ -20,7 +20,7 @@ const GAP = 4;
 export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props) {
   const cols = useMemo(() => buildColumns(win, today), [win, today]);
   const n = cols.length;
-  const colW = win.scale === 'month' ? 76 : 104;
+  const colW = 104;
   const gridW = n * colW;
   const cw = (gridW - PAD * 2 - (n - 1) * GAP) / n; // 實際每欄內容寬
   const todayIdx = cols.findIndex((c) => c.today);
@@ -41,13 +41,17 @@ export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props)
     [events, win, n],
   );
 
-  // 切換範圍或日期時，捲到今天的前一欄；今天不在範圍內就捲到最左邊
+  // 雙週：每 7 欄之間畫一條淡灰分隔線（這週｜隔週）
+  const weekLines =
+    win.scale === 'week' ? Array.from({ length: n / 7 - 1 }, (_, i) => LABEL_W + PAD + (i + 1) * 7 * (cw + GAP) - GAP / 2) : [];
+
+  // 切換範圍或日期時：雙週從週一（最左邊）開始；年視圖捲到今天的前一欄，今天不在範圍內就捲到最左邊
   const scrollRef = useRef<HTMLDivElement>(null);
   const key = `${win.scale}|${win.start.getTime()}`;
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollLeft = todayLeft >= 0 ? Math.max(0, todayLeft - LABEL_W - (cw + GAP)) : 0;
+    el.scrollLeft = win.scale === 'year' && todayLeft >= 0 ? Math.max(0, todayLeft - LABEL_W - (cw + GAP)) : 0;
   }, [key]);
 
   return (
@@ -63,6 +67,9 @@ export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props)
               </div>
             ))}
           </div>
+          {weekLines.map((x) => (
+            <div key={x} aria-hidden="true" className="week-divider" style={{ left: x }} />
+          ))}
         </div>
         <div className="tl-lanes">
           {lanes.map(({ cat, layout }) => (
@@ -78,6 +85,9 @@ export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props)
             />
           ))}
         </div>
+        {weekLines.map((x) => (
+          <div key={x} aria-hidden="true" className="week-divider" style={{ left: x }} />
+        ))}
         {todayLeft >= 0 && <div aria-hidden="true" className="today-col" style={{ left: todayLeft, width: cw }} />}
       </div>
     </div>

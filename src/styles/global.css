@@ -122,7 +122,8 @@ a:focus-visible {
 }
 
 .seg button {
-  width: 36px;
+  min-width: 36px;
+  padding: 0 6px;
   height: 34px;
   border-radius: 7px;
   border: none;
@@ -131,7 +132,6 @@ a:focus-visible {
   background: transparent;
   color: var(--ink-3);
   font-weight: 500;
-  padding: 0;
 }
 
 .seg button[aria-pressed='true'] {
@@ -344,6 +344,21 @@ a:focus-visible {
   pointer-events: none;
   background: rgba(0, 92, 175, 0.06);
   box-shadow: inset 1.5px 0 0 rgba(0, 92, 175, 0.5), inset -1.5px 0 0 rgba(0, 92, 175, 0.5);
+}
+
+.week-divider {
+  position: absolute;
+  top: 34px;
+  bottom: 0;
+  z-index: 1;
+  width: 1px;
+  margin-left: -0.5px;
+  pointer-events: none;
+  background: rgba(101, 103, 101, 0.28); /* 淡灰（鈍 #656765 低透明度） */
+}
+
+.tl-head .week-divider {
+  top: 0;
 }
 
 .tl-status {

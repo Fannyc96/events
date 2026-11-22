@@ -10,7 +10,8 @@ export type CategoryId =
 export type Precision = 'day' | 'range' | 'approx';
 export type Status = 'pending' | 'approved' | 'dismissed';
 export type Origin = 'manual' | 'auto' | 'import';
-export type Scale = 'week' | 'month' | 'year';
+/** week = 雙週：從週一開始的 14 天（這週＋隔週）；year = 1–12 月 */
+export type Scale = 'week' | 'year';
 
 export interface EventRow {
   id: string;
