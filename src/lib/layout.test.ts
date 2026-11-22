@@ -1,0 +1,200 @@
+import { describe, expect, it } from 'vitest';
+import { windowOf } from './dates';
+import { compareImportantFirst, isBandEvent, layoutLane } from './layout';
+import { ev } from './testUtils';
+
+const week = windowOf('week', '2026-11-16'); // 11/16（一）– 11/22（日）
+const year = windowOf('year', '2026-01-01');
+
+describe('isBandEvent（細條門檻）', () => {
+  it('approx 且長度 > 範圍一半才算', () => {
+    // 週範圍 7 天，一半 = 3.5
+    expect(isBandEvent(ev({ start_date: '2026-11-16', end_date: '2026-11-19', date_precision: 'approx' }), week)).toBe(true); // 4 天
+    expect(isBandEvent(ev({ start_date: '2026-11-16', end_date: '2026-11-18', date_precision: 'approx' }), week)).toBe(false); // 3 天
+  });
+
+  it('剛好一半不算（月 30 天、事件 15 天）', () => {
+    const nov = windowOf('month', '2026-11-01');
+    expect(isBandEvent(ev({ start_date: '2026-11-01', end_date: '2026-11-15', date_precision: 'approx' }), nov)).toBe(false);
+    expect(isBandEvent(ev({ start_date: '2026-11-01', end_date: '2026-11-16', date_precision: 'approx' }), nov)).toBe(true);
+  });
+
+  it('非 approx 的長事件不算', () => {
+    expect(isBandEvent(ev({ start_date: '2026-11-01', end_date: '2026-11-30', date_precision: 'range' }), week)).toBe(false);
+  });
+});
+
+describe('compareImportantFirst', () => {
+  it('重要優先 → 開始日早 → 時間長', () => {
+    const a = ev({ id: 'a', start_date: '2026-11-18', end_date: '2026-11-18' });
+    const b = ev({ id: 'b', start_date: '2026-11-17', end_date: '2026-11-17' });
+    const c = ev({ id: 'c', start_date: '2026-11-17', end_date: '2026-11-20' });
+    const d = ev({ id: 'd', start_date: '2026-11-20', end_date: '2026-11-20', important: true });
+    expect([a, b, c, d].sort(compareImportantFirst).map((e) => e.id)).toEqual(['d', 'c', 'b', 'a']);
+  });
+});
+
+describe('layoutLane', () => {
+  it('過濾掉不在範圍內的事件', () => {
+    const r = layoutLane([ev({ start_date: '2026-12-01', end_date: '2026-12-01' })], week, 7);
+    expect(r.cards).toHaveLength(0);
+    expect(r.band).toBeNull();
+  });
+
+  it('同一欄：第 1、2 排各放一件，第三件收起並出現 +1', () => {
+    const evs = [
+      ev({ id: 'x', start_date: '2026-11-18', end_date: '2026-11-18' }),
+      ev({ id: 'y', start_date: '2026-11-18', end_date: '2026-11-18' }),
+      ev({ id: 'z', start_date: '2026-11-18', end_date: '2026-11-18' }),
+    ];
+    const r = layoutLane(evs, week, 7);
+    expect(r.cards.map((c) => [c.event.id, c.row, c.cs, c.ce])).toEqual([
+      ['x', 0, 2, 2],
+      ['y', 1, 2, 2],
+    ]);
+    expect(r.more).toEqual([{ col: 2, n: 1, hasImportant: false, ids: ['x', 'y', 'z'] }]);
+  });
+
+  it('不重疊的事件都放在第 1 排', () => {
+    const r = layoutLane(
+      [
+        ev({ start_date: '2026-11-16', end_date: '2026-11-17' }),
+        ev({ start_date: '2026-11-18', end_date: '2026-11-19' }),
+      ],
+      week,
+      7,
+    );
+    expect(r.cards.map((c) => c.row)).toEqual([0, 0]);
+  });
+
+  it('重要事件優先占位，被收起的一般事件 +N 用主色', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'n1', start_date: '2026-11-18', end_date: '2026-11-18' }),
+        ev({ id: 'n2', start_date: '2026-11-18', end_date: '2026-11-18' }),
+        ev({ id: 'i1', start_date: '2026-11-18', end_date: '2026-11-18', important: true }),
+      ],
+      week,
+      7,
+    );
+    expect(r.cards.map((c) => c.event.id)).toEqual(['i1', 'n1']);
+    expect(r.more[0]).toMatchObject({ n: 1, hasImportant: false });
+  });
+
+  it('收起的事件含重要事件時 hasImportant = true', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'a', start_date: '2026-11-17', end_date: '2026-11-21', important: true }), // 長
+        ev({ id: 'b', start_date: '2026-11-17', end_date: '2026-11-20', important: true }),
+        ev({ id: 'c', start_date: '2026-11-18', end_date: '2026-11-18', important: true }),
+      ],
+      week,
+      7,
+    );
+    expect(r.cards.map((c) => c.event.id)).toEqual(['a', 'b']);
+    expect(r.more).toEqual([{ col: 2, n: 1, hasImportant: true, ids: ['a', 'b', 'c'] }]);
+  });
+
+  it('多欄事件收起時，每一欄都有 +N', () => {
+    const r = layoutLane(
+      [
+        ev({ start_date: '2026-11-16', end_date: '2026-11-22' }),
+        ev({ start_date: '2026-11-16', end_date: '2026-11-22' }),
+        ev({ start_date: '2026-11-17', end_date: '2026-11-18' }),
+      ],
+      week,
+      7,
+    );
+    expect(r.more.map((m) => m.col)).toEqual([1, 2]);
+  });
+
+  it('細條：單一條', () => {
+    const r = layoutLane(
+      [ev({ id: 'b1', start_date: '2026-11-01', end_date: '2026-11-30', date_precision: 'approx' })],
+      week,
+      7,
+    );
+    expect(r.band).toMatchObject({ ids: ['b1'], cs: 0, ce: 6 });
+    expect(r.cards).toHaveLength(0);
+  });
+
+  it('年視圖：只有超過半年的 approx 進細條，其餘照卡片規則排', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'spring', start_date: '2026-03-01', end_date: '2026-05-31', date_precision: 'approx' }),
+        ev({ id: 'h1', start_date: '2026-01-01', end_date: '2026-06-30', date_precision: 'approx', important: true }),
+        ev({ id: 'whole', start_date: '2026-01-01', end_date: '2026-12-31', date_precision: 'approx' }),
+        ev({ id: 'may', start_date: '2026-05-01', end_date: '2026-05-31', date_precision: 'approx' }), // 31 天 → 卡片
+      ],
+      year,
+      12,
+    );
+    // 年範圍 365 天，一半 182.5；上半年 181 天也不夠
+    expect(r.band?.ids).toEqual(['whole']);
+    expect(r.band).toMatchObject({ cs: 0, ce: 11 });
+    // h1（重要）第 1 排 1–6 月；spring 第 2 排 3–5 月；may 兩排都滿 → 收起，5 月出現 +1
+    expect(r.cards.map((c) => [c.event.id, c.row])).toEqual([
+      ['h1', 0],
+      ['spring', 1],
+    ]);
+    expect(r.more).toEqual([{ col: 4, n: 1, hasImportant: false, ids: ['h1', 'whole', 'spring', 'may'] }]);
+  });
+
+  it('細條：週視圖下多條合併', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'p', start_date: '2026-11-01', end_date: '2026-11-19', date_precision: 'approx' }),
+        ev({ id: 'q', start_date: '2026-11-18', end_date: '2026-12-31', date_precision: 'approx', important: true }),
+      ],
+      week,
+      7,
+    );
+    expect(r.band).toMatchObject({ ids: ['q', 'p'], cs: 0, ce: 6 });
+    expect(r.band?.first.id).toBe('q');
+  });
+
+  it('細條不占卡片排，也不計入 +N，但列在該欄清單中', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'band', start_date: '2026-11-01', end_date: '2026-11-30', date_precision: 'approx' }),
+        ev({ id: 'a', start_date: '2026-11-18', end_date: '2026-11-18' }),
+        ev({ id: 'b', start_date: '2026-11-18', end_date: '2026-11-18' }),
+        ev({ id: 'c', start_date: '2026-11-18', end_date: '2026-11-18' }),
+      ],
+      week,
+      7,
+    );
+    expect(r.cards.map((c) => c.event.id)).toEqual(['a', 'b']);
+    expect(r.more).toEqual([{ col: 2, n: 1, hasImportant: false, ids: ['band', 'a', 'b', 'c'] }]);
+  });
+
+  it('超出範圍的那一側標記為切斷', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'left', start_date: '2026-11-14', end_date: '2026-11-17' }),
+        ev({ id: 'right', start_date: '2026-11-21', end_date: '2026-11-24' }),
+        ev({ id: 'in', start_date: '2026-11-19', end_date: '2026-11-19' }),
+      ],
+      week,
+      7,
+    );
+    const byId = Object.fromEntries(r.cards.map((c) => [c.event.id, c]));
+    expect(byId.left).toMatchObject({ cs: 0, ce: 1, cutLeft: true, cutRight: false });
+    expect(byId.right).toMatchObject({ cs: 5, ce: 6, cutLeft: false, cutRight: true });
+    expect(byId.in).toMatchObject({ cutLeft: false, cutRight: false });
+  });
+
+  it('年視圖：跨年事件夾到 1 月或 12 月並標記切斷', () => {
+    const r = layoutLane(
+      [
+        ev({ id: 'from2025', start_date: '2025-12-20', end_date: '2026-01-05' }),
+        ev({ id: 'to2027', start_date: '2026-12-28', end_date: '2027-01-03' }),
+      ],
+      year,
+      12,
+    );
+    const byId = Object.fromEntries(r.cards.map((c) => [c.event.id, c]));
+    expect(byId.from2025).toMatchObject({ cs: 0, ce: 0, cutLeft: true, cutRight: false });
+    expect(byId.to2027).toMatchObject({ cs: 11, ce: 11, cutLeft: false, cutRight: true });
+  });
+});

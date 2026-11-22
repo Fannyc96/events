@@ -1,0 +1,11 @@
+node_modules
+node_modules.nosync
+dist
+.DS_Store
+*.log
+
+# 金鑰：只放在 .env.local，絕不 commit
+.env
+.env.*
+!.env.example
+*.tsbuildinfo

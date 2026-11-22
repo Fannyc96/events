@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>未來事件 手機版</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#005CAF}a:hover{color:#0B346E}
+button{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #005CAF;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #FCFAF2; color: #1C1C1C; font-family: 'Noto Sans TC', system-ui, sans-serif; position: relative; overflow: hidden; font-variant-numeric: tabular-nums">
+<div style="flex: none; height: 52px; box-sizing: border-box; display: flex; align-items: center; gap: 2px; padding: 6px 6px 6px 4px; background: #FCFAF2; border-bottom: 1px solid #BDC0BA">
+<button onClick="{{prev}}" aria-label="上一段" style="flex: none; width: 36px; height: 40px; border-radius: 10px; border: none; background: transparent; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+<button onClick="{{openPick}}" aria-label="{{winFull}}，選擇日期" aria-expanded="{{pickExpanded}}" style="flex: 1; min-width: 0; height: 40px; border: none; background: transparent; color: #1C1C1C; font-size: 17px; font-weight: 700; white-space: nowrap; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; gap: 4px">{{winShort}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<button onClick="{{next}}" aria-label="下一段" style="flex: none; width: 36px; height: 40px; border-radius: 10px; border: none; background: transparent; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+<div role="group" aria-label="時間範圍" style="flex: none; display: flex; gap: 2px; border: 1px solid #BDC0BA; padding: 2px; border-radius: 10px; margin: 0 4px">
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="3">
+<button onClick="{{seg.pick}}" aria-pressed="{{seg.pressed}}" style="{{seg.style}}">{{seg.label}}</button>
+</sc-for>
+</div>
+<button onClick="{{goReview}}" aria-label="待審核 {{pendingCount}} 件" style="flex: none; width: 36px; height: 40px; border-radius: 10px; border: none; background: transparent; color: #1C1C1C; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"></path><path d="M5 5h14l1 8v6H4v-6z"></path></svg><sc-if value="{{hasPending}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 4px; right: 0; min-width: 16px; height: 16px; border-radius: 8px; background: #CB1B45; color: #FFFFFB; font-size: 10px; font-weight: 700; line-height: 16px; padding: 0 4px; box-sizing: border-box">{{pendingCount}}</span></sc-if></button>
+<button onClick="{{toggleMenu}}" aria-label="選項與圖例" aria-expanded="{{showMenu}}" style="flex: none; width: 36px; height: 40px; border-radius: 10px; border: none; background: transparent; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.3"></circle><circle cx="12" cy="12" r="1.3"></circle><circle cx="19" cy="12" r="1.3"></circle></svg></button>
+</div>
+<div ref="{{scRef}}" style="flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; background: #FFFFFB">
+<div style="{{innerStyle}}">
+<div style="position: sticky; top: 0; z-index: 4; flex: none; height: 34px; display: flex; border-bottom: 1px solid #BDC0BA; background: #FFFFFB">
+<div style="position: sticky; left: 0; z-index: 5; flex: none; width: 30px; background: #FFFFFB"></div>
+<div style="{{gridHead}}">
+<sc-for list="{{headCols}}" as="h" hint-placeholder-count="7">
+<div style="{{h.style}}"><span style="{{colTopStyle}}">{{h.top}}</span><sc-if value="{{h.hasSub}}" hint-placeholder-val="{{ true }}"><span style="font-size: 11px">{{h.sub}}</span></sc-if></div>
+</sc-for>
+</div>
+</div>
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="6">
+<div style="{{l.row}}">
+<div style="{{l.label}}">{{l.name}}</div>
+<div style="{{gridLane}}">
+<sc-for list="{{l.bands}}" as="b" hint-placeholder-count="0">
+<button onClick="{{b.open}}" aria-label="{{b.aria}}" style="{{b.style}}">{{b.text}}</button>
+</sc-for>
+<sc-for list="{{l.cards}}" as="c" hint-placeholder-count="3">
+<button onClick="{{c.open}}" aria-label="{{c.aria}}" style="{{c.style}}"><span style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.35; word-break: break-all"><strong>{{c.who}}</strong> {{c.t}}</span></button>
+</sc-for>
+<sc-for list="{{l.more}}" as="m" hint-placeholder-count="0">
+<button onClick="{{m.open}}" aria-label="{{m.aria}}" style="{{m.style}}">+{{m.n}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{hasTodayCol}}" hint-placeholder-val="{{ false }}"><div aria-hidden="true" style="{{todayCol}}"></div></sc-if>
+</div>
+</div>
+<button onClick="{{openAdd}}" aria-label="新增事件" style="position: absolute; right: 14px; bottom: 18px; z-index: 9; width: 52px; height: 52px; border-radius: 26px; border: none; background: #1C1C1C; color: #FFFFFB; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(28,28,28,0.35)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+<sc-if value="{{hasPick}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="選擇日期" style="position: absolute; top: 50px; left: 12px; right: 12px; z-index: 10; background: #FFFFFB; border: 1px solid #BDC0BA; border-radius: 16px; box-shadow: 0 12px 32px rgba(28,28,28,0.2); padding: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px">
+<button onClick="{{pickPrev}}" aria-label="往前" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+<h2 style="margin: 0; flex: 1; text-align: center; font-size: 16px; font-weight: 700">{{pickV.title}}</h2>
+<button onClick="{{pickNext}}" aria-label="往後" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+</div>
+<sc-if value="{{pickV.isWeek}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: 12px; color: #656765; padding-bottom: 4px">
+<sc-for list="{{pickV.heads}}" as="hd" hint-placeholder-count="7"><span>{{hd}}</span></sc-for>
+</div>
+<sc-for list="{{pickV.rows}}" as="row" hint-placeholder-count="5">
+<button onClick="{{row.pick}}" aria-label="{{row.aria}}" aria-pressed="{{row.pressed}}" style="{{row.style}}">
+<sc-for list="{{row.days}}" as="dy" hint-placeholder-count="7"><span style="{{dy.style}}">{{dy.n}}</span></sc-for>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{pickV.isGrid}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{pickV.cells}}" as="pc" hint-placeholder-count="12">
+<button onClick="{{pc.pick}}" aria-pressed="{{pc.pressed}}" style="{{pc.style}}">{{pc.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 4px; border-top: 1px solid #BDC0BA">
+<button onClick="{{pickToday}}" style="height: 44px; border-radius: 10px; border: none; background: #005CAF; color: #FFFFFB; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px">回到今天</button>
+<button onClick="{{closePick}}" style="height: 44px; border-radius: 10px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #1C1C1C; font-size: 15px; cursor: pointer; margin-top: 8px">取消</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{showMenu}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="選項與圖例" style="position: absolute; top: 50px; right: 6px; z-index: 10; width: 270px; background: #FFFFFB; border: 1px solid #BDC0BA; border-radius: 14px; box-shadow: 0 10px 30px rgba(28,28,28,0.18); padding: 8px 14px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #1C1C1C">
+<button onClick="{{toggleImp}}" role="switch" aria-checked="{{impPressed}}" style="display: flex; align-items: center; justify-content: space-between; height: 44px; border: none; background: transparent; padding: 0; font-size: 15px; color: #1C1C1C; cursor: pointer">只看重要事件<span style="{{impSwitch}}"><span style="{{impKnob}}"></span></span></button>
+
+<p style="margin: 8px 0 4px; padding-top: 10px; border-top: 1px solid #BDC0BA; font-size: 12px; font-weight: 700; color: #656765">圖例（以 defense 為例）</p>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px; height: 22px; box-sizing: border-box; background: #FFFFFB; border: 1.5px solid #2D6D4B; border-radius: 5px;"></span>一般</div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px; height: 22px; box-sizing: border-box; background: #A8D8B9; border: 2px solid #2D6D4B; border-radius: 5px;"></span>重要：淺色實底＋粗框</div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px; height: 22px; box-sizing: border-box; background: #FFFFFB; border: 1.5px dashed #2D6D4B; border-radius: 5px;"></span>未確定：虛線框</div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px; height: 22px; box-sizing: border-box; background: #FFFFFB; border: 1.5px solid #2D6D4B; border-radius: 5px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);"></span>大致日期：兩端淡出</div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px; height: 22px; box-sizing: border-box; height: 12px; background: #2D6D4B24; border-radius: 3px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);"></span>橫跨大半區間的大致事件</div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex: none; width: 58px"><span style="display: inline-block; height: 13px; padding: 0 6px; border-radius: 7px; background: #2D6D4B; color: #FFFFFB; font-size: 10px; font-weight: 700; line-height: 13px">+2</span></span>放不下的事件（黑色＝含重要）</div>
+<button onClick="{{toggleMenu}}" style="margin-top: 8px; height: 40px; border-radius: 10px; border: 1px solid #BDC0BA; background: #FFFFFB; font-size: 14px; cursor: pointer; color: #1C1C1C">完成</button>
+</div>
+</sc-if>
+<sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 8; background: #FCFAF2; display: flex; flex-direction: column">
+<div style="flex: none; height: 52px; box-sizing: border-box; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; border-bottom: 1px solid #BDC0BA">
+<button onClick="{{goTimeline}}" aria-label="回時間軸" style="flex: none; width: 36px; height: 40px; border-radius: 10px; border: none; background: transparent; color: #1C1C1C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+<h1 style="margin: 0; font-size: 17px; font-weight: 700">待審核（{{pendingCount}}）</h1>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto">
+<div style="padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="margin: 0; font-size: 13px; color: #656765">新聞自動擷取的候選事件，可先編輯細項再核准</p>
+</div>
+<sc-if value="{{noPending}}" hint-placeholder-val="{{ false }}">
+<div style="background: #FFFFFB; border: 1px solid #BDC0BA; border-radius: 16px; padding: 32px 20px; text-align: center; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 16px; font-weight: 700">全部審核完畢</p>
+<p style="margin: 0; font-size: 13px; color: #656765">下次自動搜尋：明天 08:00</p>
+</div>
+</sc-if>
+<sc-for list="{{pending}}" as="p" hint-placeholder-count="3">
+<article style="background: #FFFFFB; border: 1px solid #BDC0BA; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; flex-wrap: wrap">
+<span style="font-weight: 700; color: #0B346E; background: #7DB9DE; padding: 3px 8px; border-radius: 999px">AI 建議</span>
+<span style="color: #656765">{{p.conf}}</span>
+</div>
+<h2 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.45"><sc-if value="{{p.hasWho}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; color: #434343; background: #FCFAF2; padding: 1px 6px; border-radius: 5px; margin-right: 6px; vertical-align: 2px">{{p.who}}</span></sc-if>{{p.title}}</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 10px; font-size: 14px; line-height: 1.45">
+<dt style="color: #656765; font-size: 12px; padding-top: 2px">日期</dt><dd style="margin: 0"><strong>{{p.label}}</strong> · {{p.precText}}</dd>
+<dt style="color: #656765; font-size: 12px; padding-top: 2px">分類</dt><dd style="margin: 0; display: flex; align-items: center; gap: 6px"><span style="{{p.swatch}}"></span>{{p.catName}}</dd>
+<dt style="color: #656765; font-size: 12px; padding-top: 2px">狀態</dt><dd style="margin: 0">{{p.status}} · {{p.impText}}</dd>
+<dt style="color: #656765; font-size: 12px; padding-top: 2px">地點</dt><dd style="margin: 0">{{p.loc}}</dd>
+</dl>
+<div style="background: #FCFAF2; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 700; color: #434343">{{p.src}}</span>
+<span style="font-size: 13px; color: #434343; line-height: 1.5">{{p.snip}}</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<button onClick="{{p.skip}}" style="height: 46px; border-radius: 12px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #1C1C1C; font-size: 15px; font-weight: 500; cursor: pointer">略過</button>
+<button onClick="{{p.edit}}" style="height: 46px; border-radius: 12px; border: 1px solid #005CAF; background: #FFFFFB; color: #005CAF; font-size: 15px; font-weight: 500; cursor: pointer">編輯</button>
+<button onClick="{{p.approve}}" style="height: 46px; border-radius: 12px; border: none; background: #005CAF; color: #FFFFFB; font-size: 15px; font-weight: 700; cursor: pointer">核准</button>
+</div>
+</article>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasList}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 10; background: rgba(28, 28, 28, 0.45); display: flex; flex-direction: column; justify-content: flex-end">
+<div role="dialog" aria-label="{{listTitle}}" style="background: #FFFFFB; border-radius: 22px 22px 0 0; max-height: 75%; display: flex; flex-direction: column">
+<div style="flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px 20px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 700">{{listTitle}}</h2>
+<button onClick="{{closeList}}" aria-label="關閉" style="width: 44px; height: 44px; border: none; background: transparent; border-radius: 10px; cursor: pointer; color: #434343; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{listItems}}" as="it" hint-placeholder-count="3">
+<button onClick="{{it.open}}" style="{{it.style}}"><span><strong>{{it.who}}</strong> {{it.t}} <span style="font-size: 12px; opacity: 0.85">· {{it.label}}</span></span></button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasDetail}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 10; background: rgba(28, 28, 28, 0.45); display: flex; flex-direction: column; justify-content: flex-end">
+<div role="dialog" aria-label="事件詳情" style="background: #FFFFFB; border-radius: 22px 22px 0 0; max-height: 82%; display: flex; flex-direction: column">
+<div style="flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 4px 20px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #434343"><span style="{{detail.swatch}}"></span>{{detail.catName}}</span>
+<button onClick="{{closeDetail}}" aria-label="關閉" style="width: 44px; height: 44px; border: none; background: transparent; border-radius: 10px; cursor: pointer; color: #434343; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 20px 16px; display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 700; line-height: 1.45">
+<sc-if value="{{detail.hasWho}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; font-weight: 700; color: #434343; background: #FCFAF2; padding: 2px 8px; border-radius: 6px; margin-right: 8px; vertical-align: 2px">{{detail.who}}</span></sc-if>{{detail.title}}
+</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px 12px; font-size: 15px; line-height: 1.5">
+<dt style="color: #656765; font-size: 13px; padding-top: 2px">日期</dt>
+<dd style="margin: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 700">{{detail.label}}</span><span style="font-size: 13px; color: #656765">{{detail.precText}} · {{detail.rangeText}}</span></dd>
+<dt style="color: #656765; font-size: 13px; padding-top: 2px">狀態</dt>
+<dd style="margin: 0">{{detail.status}}</dd>
+<dt style="color: #656765; font-size: 13px; padding-top: 2px">重要性</dt>
+<dd style="margin: 0">{{detail.impText}}</dd>
+<dt style="color: #656765; font-size: 13px; padding-top: 2px">地點</dt>
+<dd style="margin: 0">{{detail.loc}}</dd>
+<dt style="color: #656765; font-size: 13px; padding-top: 2px">備註</dt>
+<dd style="margin: 0; white-space: pre-line; background: #FCFAF2; border: 1px solid #BDC0BA; border-radius: 10px; padding: 10px 12px; font-size: 14px">{{detail.note}}</dd>
+</dl>
+</div>
+<div style="flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 20px 20px; border-top: 1px solid #BDC0BA">
+<button onClick="{{removeDetail}}" style="height: 48px; border-radius: 12px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #CB1B45; font-size: 15px; font-weight: 500; cursor: pointer">刪除</button>
+<button onClick="{{editDetail}}" style="height: 48px; border-radius: 12px; border: none; background: #1C1C1C; color: #FFFFFB; font-size: 15px; font-weight: 700; cursor: pointer">編輯</button>
+</div>
+
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasForm}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 11; background: rgba(28, 28, 28, 0.45); display: flex; flex-direction: column; justify-content: flex-end">
+<div role="dialog" aria-label="{{formHeading}}" style="background: #FFFFFB; border-radius: 22px 22px 0 0; height: 94%; display: flex; flex-direction: column">
+<div style="flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 12px 20px; border-bottom: 1px solid #BDC0BA">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">{{formHeading}}</h2>
+<button onClick="{{closeForm}}" aria-label="關閉" style="width: 44px; height: 44px; border: none; background: transparent; border-radius: 10px; cursor: pointer; color: #434343; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 18px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">標題
+<input type="text" value="{{form.title}}" onChange="{{fSet.title}}" placeholder="例：Summit、漢光演習" style="height: 44px; padding: 0 12px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+</label>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">Stakeholder
+<input type="text" value="{{form.who}}" onChange="{{fSet.who}}" placeholder="例：美中、G7" style="height: 44px; padding: 0 12px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">地點
+<input type="text" value="{{form.loc}}" onChange="{{fSet.loc}}" placeholder="選填" style="height: 44px; padding: 0 12px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+</label>
+</div>
+<div role="group" aria-label="分類" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 500; color: #434343">分類</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{fChips.cats}}" as="c" hint-placeholder-count="6">
+<button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div role="group" aria-label="日期類型" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 500; color: #434343">日期類型</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{fChips.precs}}" as="c" hint-placeholder-count="3">
+<button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">開始日
+<input type="date" value="{{form.start}}" onChange="{{fSet.start}}" style="height: 44px; padding: 0 10px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+</label>
+<sc-if value="{{showEnd}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">結束日
+<input type="date" value="{{form.end}}" onChange="{{fSet.end}}" style="height: 44px; padding: 0 10px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+</label>
+</sc-if>
+</div>
+<sc-if value="{{showLabel}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">顯示文字
+<input type="text" value="{{form.label}}" onChange="{{fSet.label}}" placeholder="例：Aug/Sep、春、上半年" style="height: 44px; padding: 0 12px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%">
+<span style="font-size: 12px; font-weight: 400; color: #656765">大致區間用開始／結束日定位，畫面上顯示這段文字</span>
+</label>
+</sc-if>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div role="group" aria-label="狀態" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 500; color: #434343">狀態</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{fChips.sure}}" as="c" hint-placeholder-count="2">
+<button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+<div role="group" aria-label="重要性" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 500; color: #434343">重要性</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{fChips.imp}}" as="c" hint-placeholder-count="2">
+<button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: #434343">備註
+<textarea value="{{form.note}}" onChange="{{fSet.note}}" rows="4" placeholder="選填，點開事件時才顯示" style="padding: 10px 12px; border: 1px solid #BDC0BA; border-radius: 10px; font-size: 16px; font-family: inherit; color: #1C1C1C; background: #FFFFFB; box-sizing: border-box; width: 100%; resize: vertical; line-height: 1.5"></textarea>
+</label>
+<sc-if value="{{hasFormError}}" hint-placeholder-val="{{ false }}">
+<p role="alert" style="margin: 0; font-size: 14px; color: #CB1B45; font-weight: 500">{{formError}}</p>
+</sc-if>
+</div>
+<div style="flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 20px 20px; border-top: 1px solid #BDC0BA">
+<button onClick="{{closeForm}}" style="height: 48px; border-radius: 12px; border: 1px solid #BDC0BA; background: #FFFFFB; color: #1C1C1C; font-size: 15px; font-weight: 500; cursor: pointer">取消</button>
+<button onClick="{{saveForm}}" style="height: 48px; border-radius: 12px; border: none; background: #005CAF; color: #FFFFFB; font-size: 15px; font-weight: 700; cursor: pointer">{{saveText}}</button>
+</div>
+
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 20; background: #1C1C1C; color: #FFFFFB; font-size: 14px; padding: 10px 16px; border-radius: 999px; white-space: nowrap">{{toast}}</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var TODAY = new Date(2026, 10, 21);
+var DAY = 86400000;
+var CATS = [
+  { id: 'intl', name: 'international', color: '#9353AC', band: '#F7F2FA', chip: '#E9DCF1' },
+  { id: 'allied', name: 'allied', color: '#0284C7', band: '#F0F7FC', chip: '#D6EAF6' },
+  { id: 'adv', name: 'adversary', color: '#D43238', band: '#FCF2F2', chip: '#F6DADB' },
+  { id: 'cs', name: 'cross-strait, Taiwan', color: '#9F7656', band: '#FBF7F1', chip: '#F0E4D3' },
+  { id: 'trade', name: 'trade/tech', color: '#11927D', band: '#F0F8F6', chip: '#D3ECE7' },
+  { id: 'def', name: 'defense', color: '#475569', band: '#F3F5F7', chip: '#DDE3EA' }
+];
+var PREC = { d: '單日', r: '多日', a: '大致區間' };
+// cat, start, end, prec(d 單日 / r 多日 / a 大致), 顯示日期, stakeholder, 標題, 地點, 備註, 已確定, 重要
+var RAW = [
+  ['intl', '2026-02-28', '2026-04-30', 'a', '2/28-', '美伊', '戰爭持續中，川普初估5週', '', '', 1, 1],
+  ['intl', '2026-05-01', '2026-05-31', 'a', 'May', '美中', '川普訪中? 延長貿易休戰協議1年?', '', '', 0, 1],
+  ['intl', '2026-05-01', '2026-05-31', 'a', 'May', 'ASEAN', 'Summit', '菲（host）', '', 1, 0],
+  ['intl', '2026-05-29', '2026-05-31', 'r', '5/29-31', 'Multi', 'Shangri-La Dialogue', '新加坡', '', 1, 0],
+  ['intl', '2026-06-14', '2026-06-16', 'r', '6/14-16', 'G7', 'Summit', 'France', '', 1, 0],
+  ['intl', '2026-01-01', '2026-12-31', 'a', '2026', '中南美', 'Summit of the Americas', 'Dominican Republic（host）', '', 1, 0],
+  ['intl', '2026-07-07', '2026-07-08', 'r', '7/7-8', 'NATO', 'Summit', 'Turkey', '', 1, 0],
+  ['intl', '2026-08-01', '2026-09-30', 'a', 'Aug/Sep', '美中', '習訪美?', '', '', 0, 1],
+  ['intl', '2026-09-22', '2026-09-22', 'd', '9/22', 'UN', 'General Assembly’s High-Level Debate', '', 'successor of the Secretary General?', 1, 0],
+  ['intl', '2026-10-01', '2026-10-31', 'a', 'October', 'ASEAN', 'Summit (main one)', '菲（host）', '', 1, 0],
+  ['intl', '2026-11-18', '2026-11-19', 'r', '11/18-19', '中', '主辦APEC', '深圳', '', 1, 1],
+  ['intl', '2026-12-14', '2026-12-15', 'r', '12/14-15', 'G20', 'summit', 'Mar-a-Lago', '', 1, 0],
+  ['allied', '2026-10-04', '2026-10-04', 'd', '10/4', '巴西', '大選', '', '', 1, 0],
+  ['allied', '2026-10-01', '2026-10-31', 'a', 'October', '以', 'Primer Election', '', '', 1, 0],
+  ['allied', '2026-11-03', '2026-11-03', 'd', '11/3', '美', 'midterm election', '', 'all 435 seats in the U.S. House of Representatives and 35 of the 100 seats in the U.S. Senate will be elected', 1, 1],
+  ['allied', '2028-01-01', '2028-12-31', 'a', '2028', '美', 'Olympics', 'US', '', 1, 0],
+  ['adv', '2026-09-01', '2026-09-30', 'a', 'Sep?', 'BRICS', 'Summit', 'India（host）', '', 0, 0],
+  ['adv', '2026-09-09', '2026-09-09', 'd', '9/9', '中', '毛澤東逝世50週年', '', '', 1, 0],
+  ['adv', '2026-01-01', '2026-12-31', 'a', '2026', '中', '五中全會？', '', '', 0, 1],
+  ['cs', '2026-03-23', '2026-03-26', 'r', '3/23, 25, 26', '立院', '國防預算條例委員會審查', '', '', 1, 1],
+  ['cs', '2026-03-01', '2026-05-31', 'a', '春', '台', '立院台美貿易協定verify（併特別預算爭議）', '', '', 1, 1],
+  ['cs', '2026-03-01', '2026-05-31', 'a', '春', '藍白合', '新北、宜蘭、嘉義市民調', '', '', 1, 0],
+  ['cs', '2026-03-01', '2026-05-31', 'a', '春', '立院', '民眾黨團不在籍投票協商', '', '', 1, 0],
+  ['cs', '2026-05-19', '2026-05-19', 'd', '5/19', '立院', '總統彈劾案投票', '', '', 1, 0],
+  ['cs', '2026-01-01', '2026-06-30', 'a', '上半年', '鄭習會', '鄭習會、比前往華府優先', '', '', 1, 1],
+  ['cs', '2026-10-10', '2026-10-10', 'd', '10/10', '台', '國慶演說', '', '', 1, 0],
+  ['cs', '2026-11-12', '2026-11-12', 'd', '11/12', '兩岸', '孫中山160週年誕辰，中國政協舉辦紀念大會', '', '', 1, 0],
+  ['cs', '2026-11-28', '2026-11-28', 'd', '11/28', '台灣', '縣市長選舉', '', '', 1, 1],
+  ['trade', '2026-03-17', '2026-03-17', 'd', '3/17', '中', '初步批准H200購買許可給字節跳動、騰訊、阿里巴巴及Deepseek', '', '', 1, 0],
+  ['trade', '2026-04-28', '2026-04-29', 'r', '4/28-29', '美', 'FED FOMC會議', '', '', 1, 0],
+  ['trade', '2026-05-01', '2026-05-31', 'a', 'May', '美', 'Fed Chair Jerome Powell EOT', '', 'list: 聯準會前理事 Kevin Warsh、白宮國家經濟會議主席 Kevin Hassett、聯準會理事Christopher Waller、BlackRock固定收益投資長Rick Rieder，印象裡2月底可安插人進去', 1, 0],
+  ['trade', '2026-06-01', '2026-06-30', 'a', 'Jun', '美', 'SpaceX IPO', '', '', 1, 0],
+  ['trade', '2026-06-16', '2026-06-17', 'r', '6/16-17', '美', 'FED FOMC會議(新任主席上任後首次會議)', '', '', 1, 0],
+  ['trade', '2026-07-01', '2026-07-01', 'd', '7/1', '美', 'USMCA expiration', '', '', 1, 0],
+  ['trade', '2026-10-27', '2026-10-28', 'r', '10/27-28', '美', 'FED FOMC會議', '', '', 1, 0],
+  ['trade', '2026-12-08', '2026-12-09', 'r', '12/8-9', '美', 'FED FOMC會議', '', '', 1, 0],
+  ['def', '2026-03-17', '2026-03-17', 'd', '3/17', '台美', 'MQ-9B首批交機', '美', '', 1, 0],
+  ['def', '2026-04-10', '2026-04-24', 'r', '4/10-24', '台', '漢光演習兵推，中央聯合應變中心參與6天3階段', '', '', 1, 0],
+  ['def', '2026-06-01', '2026-06-30', 'a', 'June', '台', '海鯤號交艦?', '', '現置重點於「主機與電力管理系統」及「整合式儎台管理系統（IPMS）」\n向美方租借操雷驗證設備，租期至2026/05', 0, 0],
+  ['def', '2026-07-01', '2026-07-31', 'a', 'July', '台', '濱海作戰指揮部（Littoral Combat Command）deployed', '', '', 1, 0],
+  ['def', '2026-08-05', '2026-08-14', 'r', '8/5-14', '台', '漢光演習', '', '', 1, 1],
+  ['def', '2026-09-01', '2026-09-30', 'a', 'September', '台', '台北國防展', '', '', 1, 1],
+  ['def', '2026-10-01', '2026-10-31', 'a', 'October', '美台', 'USTBC Annual Conference', '', '', 1, 0]
+];
+var EVENTS = RAW.map(function (r, i) {
+  return { id: 'e' + (i + 1), cat: r[0], start: r[1], end: r[2], prec: r[3], label: r[4], who: r[5], title: r[6], loc: r[7], note: r[8], sure: !!r[9], imp: !!r[10] };
+});
+var PENDING = [
+  { id: 'p1', cat: 'intl', start: '2026-12-02', end: '2026-12-03', prec: 'r', label: '12/2-3', who: 'NATO', title: '外長會議', loc: 'Brussels', note: '', sure: true, imp: false, conf: '新聞寫明日期', src: 'Reuters・11/20（範例）', snip: 'NATO 外長將於 12 月初在布魯塞爾集會。（範例摘要）' },
+  { id: 'p2', cat: 'allied', start: '2027-01-01', end: '2027-02-28', prec: 'a', label: 'Jan/Feb', who: '美', title: '國情咨文', loc: '', note: '', sure: false, imp: true, conf: '依往年推估', src: 'Politico・11/19（範例）', snip: '白宮尚未公布日期，往年於 1 至 2 月間舉行。（範例摘要）' },
+  { id: 'p3', cat: 'adv', start: '2027-03-05', end: '2027-03-05', prec: 'd', label: '3/5', who: '中', title: '全國人大開幕（兩會）', loc: '北京', note: '', sure: false, imp: true, conf: '依慣例推估', src: '新華社・11/18（範例）', snip: '依慣例於 3 月 5 日開幕，正式日期待公告。（範例摘要）' },
+  { id: 'p4', cat: 'def', start: '2026-12-01', end: '2026-12-31', prec: 'a', label: 'Dec', who: '美', title: 'NDAA 簽署?', loc: '', note: '', sure: false, imp: true, conf: '新聞只寫「12 月」', src: 'Defense News・11/21（範例）', snip: '兩院協商版本預計 12 月送交總統。（範例摘要）' }
+];
+
+function pd(s) { var a = s.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2]); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function mdl(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+function ymd(d) { return d.getFullYear() + '/' + mdl(d); }
+function autoLabel(prec, s, e) {
+  var a = pd(s), b = pd(e);
+  if (prec === 'd' || s === e) return mdl(a);
+  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return mdl(a) + '-' + b.getDate();
+  return mdl(a) + '-' + mdl(b);
+}
+function catOf(id) { return CATS.filter(function (c) { return c.id === id; })[0] || CATS[0]; }
+function windowOf(scale, anchor) {
+  var a = pd(anchor);
+  if (scale === 'year') return { s: new Date(a.getFullYear(), 0, 1), e: new Date(a.getFullYear(), 11, 31), title: a.getFullYear() + ' 年' };
+  if (scale === 'month') return { s: new Date(a.getFullYear(), a.getMonth(), 1), e: new Date(a.getFullYear(), a.getMonth() + 1, 0), title: a.getFullYear() + ' 年 ' + (a.getMonth() + 1) + ' 月' };
+  var dow = (a.getDay() + 6) % 7;
+  var s = new Date(a.getFullYear(), a.getMonth(), a.getDate() - dow);
+  var e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+  return { s: s, e: e, title: s.getFullYear() + '/' + mdl(s) + ' – ' + mdl(e) };
+}
+function shiftAnchor(scale, anchor, dir) {
+  var a = pd(anchor);
+  if (scale === 'year') return iso(new Date(a.getFullYear() + dir, a.getMonth(), 1));
+  if (scale === 'month') return iso(new Date(a.getFullYear(), a.getMonth() + dir, 1));
+  return iso(new Date(a.getFullYear(), a.getMonth(), a.getDate() + 7 * dir));
+}
+function pos(d, w) {
+  var total = Math.round((w.e - w.s) / DAY) + 1;
+  return Math.max(0, Math.min(100, ((d - w.s) / DAY) / total * 100));
+}
+function f2(n) { return n.toFixed(2); }
+
+// 色彩皆取自 nipponcolors.com：main = 標籤／邊框（白字對比 ≥4.5），light = 重要卡片實底（黑字對比 ≥7.7）
+var CSTY = {
+  intl: { main: '#77428D', light: '#B28FCE' },   // 江戸紫 EDOMURASAKI／薄 USU
+  allied: { main: '#006284', light: '#7DB9DE' }, // 縹 HANADA／勿忘草 WASURENAGUSA
+  adv: { main: '#AB3B3A', light: '#F4A7B9' },    // 真朱 SHINSYU／一斥染 IKKONZOME
+  cs: { main: '#C7802D', light: '#FAD689' },     // 金茶 KINCHA／浅黄 USUKI
+  trade: { main: '#0D5661', light: '#66BAB7' },  // 藍 AI／水浅葱 MIZUASAGI
+  def: { main: '#2D6D4B', light: '#A8D8B9' }     // 木賊 TOKUSA／白緑 BYAKUROKU
+};
+CATS.forEach(function (c) { c.color = CSTY[c.id].main; });
+var ORDER = ['intl', 'allied', 'adv', 'cs', 'def', 'trade'];
+CATS.sort(function (a, b) { return ORDER.indexOf(a.id) - ORDER.indexOf(b.id); });
+var WD = ['日', '一', '二', '三', '四', '五', '六'];
+var FADE = '-webkit-mask-image:linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);mask-image:linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);';
+function cardStyle(ev, c, contL, contR) {
+  var k = CSTY[c.id], ap = ev.prec === 'a';
+  var st = 'min-width:0;box-sizing:border-box;padding:2px ' + (ap ? '12px' : '6px') + ';text-align:left;cursor:pointer;font-family:inherit;overflow:hidden;display:flex;align-items:center;color:#1C1C1C;';
+  st += 'border-radius:' + (contL ? 0 : 5) + 'px ' + (contR ? 0 : 5) + 'px ' + (contR ? 0 : 5) + 'px ' + (contL ? 0 : 5) + 'px;';
+  st += ev.imp ? 'background:' + k.light + ';' : 'background:#FFFFFB;';
+  st += 'border:' + ((ev.imp ? 2 : 1.5) + (k.bw || 0)) + 'px ' + (ev.sure ? 'solid ' : 'dashed ') + k.main + ';';
+  if (contL) st += 'border-left-width:0;';
+  if (contR) st += 'border-right-width:0;';
+  if (ap) st += FADE;
+  return st;
+}
+function impFirst(a, b) { return ((b.imp ? 1 : 0) - (a.imp ? 1 : 0)) || (a.start < b.start ? -1 : a.start > b.start ? 1 : 0) || (pd(b.end) - pd(b.start)) - (pd(a.end) - pd(a.start)); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'timeline', scale: 'week', anchor: iso(TODAY), onlyImp: false, events: EVENTS.slice(), pending: PENDING.slice(), detail: null, list: null, form: null, formError: '', toast: '', menu: false, pick: null };
+  }
+  flash(msg) {
+    var self = this;
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(function () { self.setState({ toast: '' }); }, 1800);
+  }
+  componentWillUnmount() { clearTimeout(this._t); }
+  openForm(mode, src, refId) {
+    this.setState({
+      form: { mode: mode, refId: refId || null, title: src.title || '', who: src.who || '', cat: src.cat || 'intl', prec: src.prec || 'd', start: src.start || iso(TODAY), end: src.end || src.start || iso(TODAY), label: src.prec === 'a' ? (src.label || '') : '', sure: src.sure !== false, imp: !!src.imp, loc: src.loc || '', note: src.note || '' },
+      formError: '', detail: null, list: null
+    });
+  }
+  renderVals() {
+    var self = this, s = this.state;
+    var w = windowOf(s.scale, s.anchor);
+    var isYear = s.scale === 'year';
+
+    // ---- 欄位 ----
+    var cols = [];
+    if (isYear) {
+      for (var m = 0; m < 12; m++) cols.push({ top: (m + 1) + '月', sub: '', today: TODAY.getFullYear() === w.s.getFullYear() && TODAY.getMonth() === m });
+    } else {
+      for (var d = new Date(w.s); d <= w.e; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+        cols.push({ top: s.scale === 'week' ? mdl(d) : String(d.getDate()), sub: WD[d.getDay()], today: iso(d) === iso(TODAY), weekend: d.getDay() === 0 || d.getDay() === 6 });
+      }
+    }
+    var n = cols.length;
+    var colW = s.scale === 'month' ? 76 : 104;
+    var gridW = n * colW;
+    var winDays = Math.round((w.e - w.s) / DAY) + 1;
+    function colOf(dt) {
+      if (isYear) { if (dt.getFullYear() < w.s.getFullYear()) return -1; if (dt.getFullYear() > w.s.getFullYear()) return n; return dt.getMonth(); }
+      return Math.round((dt - w.s) / DAY);
+    }
+    var gridCols = 'grid-template-columns:repeat(' + n + ', minmax(0, 1fr));';
+    var cw = (gridW - 8 - (n - 1) * 4) / n;
+    var todayIdx = -1;
+    cols.forEach(function (c, i) { if (c.today) todayIdx = i; });
+    var headCols = cols.map(function (c) {
+      return { top: c.top, sub: c.sub, hasSub: !!c.sub, style: 'display:flex;align-items:center;justify-content:center;gap:4px;border-radius:8px;line-height:1.15;' + (c.today ? 'background:#005CAF;color:#FFFFFB;' : c.weekend ? 'color:#656765;' : 'color:#1C1C1C;') };
+    });
+
+    // ---- 分類列 ----
+    var vis = s.events.filter(function (e) { return (!s.onlyImp || e.imp) && pd(e.start) <= w.e && pd(e.end) >= w.s; });
+    var lanes = CATS.map(function (c) {
+      var k = CSTY[c.id];
+      var evs = vis.filter(function (e) { return e.cat === c.id; }).map(function (e) {
+        var a = pd(e.start), b = pd(e.end);
+        var sI = colOf(a), eI = colOf(b);
+        return { ev: e, sI: sI, eI: eI, cs: Math.max(0, sI), ce: Math.min(n - 1, eI), dur: Math.round((b - a) / DAY) + 1 };
+      }).sort(function (x, y) { return impFirst(x.ev, y.ev); });
+      var bandCands = evs.filter(function (x) { return x.ev.prec === 'a' && x.dur > winDays / 2; });
+      var band = bandCands[0];
+      var occ = [[], []], cards = [], hidden = [];
+      evs.forEach(function (x) {
+        if (bandCands.indexOf(x) >= 0) return;
+        var r = 0;
+        function free(row) { for (var q = x.cs; q <= x.ce; q++) if (occ[row][q]) return false; return true; }
+        while (r < 2 && !free(r)) r++;
+        if (r >= 2) { hidden.push(x); return; }
+        for (var q = x.cs; q <= x.ce; q++) occ[r][q] = true;
+        var e = x.ev;
+        cards.push({
+          who: e.who, t: e.title,
+          aria: e.who + '：' + e.title + '，' + e.label + (e.imp ? '，重要' : '') + (e.sure ? '' : '，未確定'),
+          style: 'grid-row:' + (r + 2) + ';grid-column:' + (x.cs + 1) + ' / span ' + (x.ce - x.cs + 1) + ';' + cardStyle(e, c, x.sI < 0, x.eI > n - 1),
+          open: function () { self.setState({ detail: e.id, list: null }); }
+        });
+      });
+      var bands = band ? [band].map(function (x) {
+        var e = x.ev, many = bandCands.length > 1;
+        var cs = Math.min.apply(null, bandCands.map(function (y) { return y.cs; })), ce = Math.max.apply(null, bandCands.map(function (y) { return y.ce; }));
+        var ids = bandCands.map(function (y) { return y.ev.id; });
+        return {
+          text: e.who + '｜' + e.title + '（' + e.label + '）' + (many ? ' 等 ' + bandCands.length + ' 件' : ''),
+          aria: '大致區間事件 ' + e.who + '：' + e.title + (many ? '，共 ' + bandCands.length + ' 件，看全部' : ''),
+          style: 'grid-row:1;grid-column:' + (cs + 1) + ' / span ' + (ce - cs + 1) + ';height:14px;box-sizing:border-box;border:none;border-radius:3px;padding:0 6px;font-size:10px;line-height:14px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;' + 'color:#1C1C1C;padding:0 14px;' + (e.imp ? 'background:' + k.light + ';font-weight:700;' : 'background:' + k.main + '24;') + (e.sure ? '' : 'outline:1px dashed ' + k.main + ';outline-offset:-1px;') + FADE,
+          open: many ? function () { self.setState({ list: { cat: c.id, ids: ids, title: c.name + '・大致區間事件（' + ids.length + ' 件）' }, detail: null }); } : function () { self.setState({ detail: e.id, list: null }); }
+        };
+      }) : [];
+      var more = [];
+      for (var col = 0; col < n; col++) {
+        (function (col) {
+          var hs = hidden.filter(function (x) { return x.cs <= col && x.ce >= col; });
+          if (!hs.length) return;
+          var all = evs.filter(function (x) { return x.cs <= col && x.ce >= col; }).map(function (x) { return x.ev.id; });
+          var colName = isYear ? (col + 1) + ' 月' : cols[col].top + (s.scale === 'month' ? ' 日' : '');
+          more.push({
+            n: hs.length, aria: colName + '還有 ' + hs.length + ' 件，看全部',
+            style: 'grid-row:4;grid-column:' + (col + 1) + ';justify-self:start;height:13px;padding:0 6px;border-radius:7px;border:none;background:' + (hs.some(function (x) { return x.ev.imp; }) ? '#1C1C1C' : k.main) + ';color:' + (hs.some(function (x) { return x.ev.imp; }) ? '#FFFFFB' : (k.ink || '#FFFFFB')) + ';font-size:10px;font-weight:700;line-height:13px;cursor:pointer;',
+            open: function () { self.setState({ list: { cat: c.id, ids: all, title: c.name + '・' + colName + '（' + all.length + ' 件）' }, detail: null }); }
+          });
+        })(col);
+      }
+      return {
+        name: c.name, cards: cards, bands: bands, more: more,
+        row: 'flex:none;height:120px;display:flex;border-bottom:1px solid #BDC0BA;background:' + k.main + '0F;',
+        label: 'position:sticky;left:0;z-index:2;flex:none;width:30px;display:flex;align-items:center;justify-content:center;background:' + k.main + ';color:' + (k.ink || '#FFFFFB') + ';font-size:11px;font-weight:700;writing-mode:vertical-rl;transform:rotate(180deg);line-height:1.1;text-align:center;padding:4px 0;box-sizing:border-box;'
+      };
+    });
+    var todayLeft = todayIdx >= 0 ? 30 + 4 + todayIdx * (cw + 4) : -1;
+    var scrollKey = s.scale + s.anchor;
+
+    // ---- 清單（+N）----
+    var listItems = [];
+    if (s.list) {
+      listItems = s.events.filter(function (e) { return s.list.ids.indexOf(e.id) >= 0; }).sort(impFirst).map(function (e) {
+        return { who: e.who, t: e.title, label: e.label, style: cardStyle(e, catOf(e.cat), false, false) + 'width:100%;min-height:48px;padding:8px 12px;font-size:15px;line-height:1.45;', open: function () { self.setState({ detail: e.id, list: null }); } };
+      });
+    }
+
+    var segBase = 'width:36px;height:34px;border-radius:7px;border:none;font-size:14px;cursor:pointer;';
+    var segs = [['week', '週'], ['month', '月'], ['year', '年']].map(function (p) {
+      var on = s.scale === p[0];
+      return { label: p[1], pressed: on ? 'true' : 'false', style: segBase + (on ? 'background:#1C1C1C;color:#FFFFFB;font-weight:700;' : 'background:transparent;color:#434343;font-weight:500;'), pick: function () { self.setState({ scale: p[0] }); } };
+    });
+
+    // detail
+    var det = s.events.filter(function (e) { return e.id === s.detail; })[0];
+    var detail = { catName: '', swatch: '', title: '', who: '', hasWho: false, label: '', precText: '', rangeText: '', status: '', impText: '', loc: '', note: '' };
+    if (det) {
+      var dc = catOf(det.cat);
+      var da = pd(det.start), db = pd(det.end);
+      detail = {
+        catName: dc.name, swatch: 'flex:none;width:12px;height:12px;border-radius:3px;background:' + dc.color + ';',
+        title: det.title, who: det.who, hasWho: !!det.who, label: det.label, precText: PREC[det.prec],
+        rangeText: det.start === det.end ? ymd(da) : ymd(da) + ' – ' + ymd(db) + (det.prec === 'a' ? '（大致）' : ''),
+        status: det.sure ? '已確定' : '未確定', impText: det.imp ? '重要' : '一般',
+        loc: det.loc || '—', note: det.note || '—'
+      };
+    }
+
+    // form
+    var f = s.form;
+    function chip(on) { return 'min-height:40px;padding:0 12px;border-radius:10px;font-size:14px;cursor:pointer;' + (on ? 'background:#1C1C1C;color:#FFFFFB;border:1px solid #1C1C1C;font-weight:700;' : 'background:#FFFFFB;color:#434343;border:1px solid #BDC0BA;font-weight:400;'); }
+    function setF(k, v) { var n = Object.assign({}, self.state.form); n[k] = v; self.setState({ form: n }); }
+    function mk(k) { return function (e) { setF(k, e.target.value); }; }
+    var form = f || { title: '', who: '', cat: 'intl', prec: 'd', start: '', end: '', label: '', loc: '', note: '' };
+    var fChips = {
+      cats: CATS.map(function (c) { var on = form.cat === c.id; return { label: c.name, pressed: on ? 'true' : 'false', style: chip(on), pick: function () { setF('cat', c.id); } }; }),
+      precs: [['d', '單日'], ['r', '多日'], ['a', '大致區間']].map(function (p) { var on = form.prec === p[0]; return { label: p[1], pressed: on ? 'true' : 'false', style: chip(on), pick: function () { setF('prec', p[0]); } }; }),
+      sure: [[true, '已確定'], [false, '未確定']].map(function (p) { var on = !!form.sure === p[0]; return { label: p[1], pressed: on ? 'true' : 'false', style: chip(on), pick: function () { setF('sure', p[0]); } }; }),
+      imp: [[false, '一般'], [true, '重要']].map(function (p) { var on = !!form.imp === p[0]; return { label: p[1], pressed: on ? 'true' : 'false', style: chip(on), pick: function () { setF('imp', p[0]); } }; })
+    };
+
+    var pending = s.pending.map(function (p) {
+      var pc = catOf(p.cat);
+      return {
+        title: p.title, who: p.who, hasWho: !!p.who, label: p.label, precText: PREC[p.prec], catName: pc.name,
+        swatch: 'flex:none;width:10px;height:10px;border-radius:3px;background:' + pc.color + ';',
+        loc: p.loc || '—', status: p.sure ? '已確定' : '未確定', impText: p.imp ? '重要' : '一般', conf: p.conf, src: p.src, snip: p.snip,
+        approve: function () {
+          var ev = { id: 'n' + Date.now(), cat: p.cat, start: p.start, end: p.end, prec: p.prec, label: p.label, who: p.who, title: p.title, loc: p.loc, note: p.note, sure: p.sure, imp: p.imp };
+          self.setState({ pending: self.state.pending.filter(function (q) { return q.id !== p.id; }), events: self.state.events.concat([ev]) });
+          self.flash('已加入時間軸');
+        },
+        skip: function () { self.setState({ pending: self.state.pending.filter(function (q) { return q.id !== p.id; }) }); self.flash('已略過'); },
+        edit: function () { self.openForm('review', p, p.id); }
+      };
+    });
+
+
+
+    // ---- 選日期的小日曆 ----
+    var pk = s.pick, pickV = { title: '', isWeek: false, isGrid: false, rows: [], cells: [], heads: ['一', '二', '三', '四', '五', '六', '日'] };
+    if (pk) {
+      var cd = pd(pk.cur), py = cd.getFullYear(), pm = cd.getMonth();
+      var aw = windowOf(s.scale, s.anchor);
+      var cellBase = 'height:44px;border-radius:10px;font-size:15px;cursor:pointer;font-family:inherit;';
+      if (s.scale === 'week') {
+        pickV.isWeek = true; pickV.title = py + ' 年 ' + (pm + 1) + ' 月';
+        var first = new Date(py, pm, 1), st0 = new Date(py, pm, 1 - (first.getDay() + 6) % 7);
+        for (var r = 0; r < 6; r++) {
+          var mon = new Date(st0.getFullYear(), st0.getMonth(), st0.getDate() + r * 7);
+          if (r > 0 && (mon.getMonth() !== pm)) break;
+          (function (mon) {
+            var sel = iso(mon) === iso(aw.s);
+            var days = [];
+            for (var i = 0; i < 7; i++) {
+              var dd = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+              var isT = iso(dd) === iso(TODAY);
+              days.push({ n: dd.getDate(), style: 'display:flex;align-items:center;justify-content:center;height:30px;width:30px;margin:0 auto;border-radius:15px;font-size:14px;' + (isT ? 'box-shadow:inset 0 0 0 2px ' + (sel ? '#FFFFFB' : '#005CAF') + ';font-weight:700;' : '') + (sel ? 'color:#FFFFFB;' : dd.getMonth() !== pm ? 'color:#91989F;' : 'color:#1C1C1C;') });
+            }
+            var end = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+            pickV.rows.push({ days: days, pressed: sel ? 'true' : 'false', aria: mdl(mon) + ' 到 ' + mdl(end) + ' 這週', style: 'display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));align-items:center;width:100%;height:40px;padding:0;border:none;border-radius:20px;cursor:pointer;font-family:inherit;' + (sel ? 'background:#1C1C1C;' : 'background:transparent;'), pick: function () { self.setState({ anchor: iso(mon), pick: null }); } });
+          })(mon);
+        }
+      } else if (s.scale === 'month') {
+        pickV.isGrid = true; pickV.title = py + ' 年';
+        for (var q = 0; q < 12; q++) (function (q) {
+          var sel = aw.s.getFullYear() === py && aw.s.getMonth() === q, isT = TODAY.getFullYear() === py && TODAY.getMonth() === q;
+          pickV.cells.push({ label: (q + 1) + ' 月', pressed: sel ? 'true' : 'false', style: cellBase + (sel ? 'background:#1C1C1C;color:#FFFFFB;font-weight:700;border:none;' : 'background:#FFFFFB;color:#1C1C1C;border:1px solid ' + (isT ? '#005CAF' : '#BDC0BA') + ';' + (isT ? 'font-weight:700;box-shadow:inset 0 0 0 1px #005CAF;' : '')), pick: function () { self.setState({ anchor: iso(new Date(py, q, 1)), pick: null }); } });
+        })(q);
+      } else {
+        var y0 = py - 4;
+        pickV.isGrid = true; pickV.title = y0 + ' – ' + (y0 + 11);
+        for (var q2 = 0; q2 < 12; q2++) (function (yy) {
+          var sel = aw.s.getFullYear() === yy, isT = TODAY.getFullYear() === yy;
+          pickV.cells.push({ label: String(yy), pressed: sel ? 'true' : 'false', style: cellBase + (sel ? 'background:#1C1C1C;color:#FFFFFB;font-weight:700;border:none;' : 'background:#FFFFFB;color:#1C1C1C;border:1px solid ' + (isT ? '#005CAF' : '#BDC0BA') + ';' + (isT ? 'font-weight:700;box-shadow:inset 0 0 0 1px #005CAF;' : '')), pick: function () { self.setState({ anchor: iso(new Date(yy, 0, 1)), pick: null }); } });
+        })(y0 + q2);
+      }
+    }
+    function stepPick(dir) {
+      var cd = pd(s.pick.cur);
+      var nx = s.scale === 'week' ? new Date(cd.getFullYear(), cd.getMonth() + dir, 1) : s.scale === 'month' ? new Date(cd.getFullYear() + dir, 0, 1) : new Date(cd.getFullYear() + 12 * dir, 0, 1);
+      self.setState({ pick: { cur: iso(nx) } });
+    }
+    var winShort = isYear ? String(w.s.getFullYear()) : s.scale === 'month' ? w.s.getFullYear() + '/' + (w.s.getMonth() + 1) : (w.s.getMonth() === w.e.getMonth() ? mdl(w.s) + '–' + w.e.getDate() : mdl(w.s) + '–' + mdl(w.e));
+    var tl = s.tab === 'timeline';
+    var tabBase = 'display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:center;border:none;background:transparent;font-size:12px;cursor:pointer;';
+    return {
+      isTimeline: tl, isReview: !tl,
+      segs: segs, winTitle: w.title,
+      prev: function () { self.setState({ anchor: shiftAnchor(s.scale, s.anchor, -1) }); },
+      next: function () { self.setState({ anchor: shiftAnchor(s.scale, s.anchor, 1) }); },
+      goToday: function () { self.setState({ anchor: iso(TODAY) }); },
+      innerStyle: 'width:' + (30 + gridW) + 'px;display:flex;flex-direction:column;position:relative;',
+      gridHead: 'flex:1;display:grid;' + gridCols + 'column-gap:4px;padding:3px 4px;',
+      gridLane: 'flex:1;display:grid;' + gridCols + 'grid-template-rows:14px 38px 38px 13px;gap:3px 4px;padding:4px;',
+      headCols: headCols, colTopStyle: s.scale === 'month' ? 'font-size:14px;font-weight:700;' : 'font-size:14px;font-weight:700;',
+      lanes: lanes,
+      hasTodayCol: todayLeft >= 0,
+      todayCol: 'position:absolute;top:34px;bottom:0;z-index:1;pointer-events:none;left:' + todayLeft + 'px;width:' + cw + 'px;background:rgba(0,92,175,0.06);box-shadow:inset 1.5px 0 0 rgba(0,92,175,0.5), inset -1.5px 0 0 rgba(0,92,175,0.5);',
+      scRef: function (el) {
+        if (!el || self._sk === scrollKey) return;
+        self._sk = scrollKey;
+        el.scrollLeft = todayLeft >= 0 ? Math.max(0, todayLeft - 30 - (cw + 4)) : 0;
+      },
+      impPressed: s.onlyImp ? 'true' : 'false',
+      impStyle: 'height:36px;padding:0 12px;border-radius:999px;font-size:13px;cursor:pointer;white-space:nowrap;' + (s.onlyImp ? 'background:#CB1B45;color:#FFFFFB;border:1px solid #CB1B45;font-weight:700;' : 'background:#FFFFFB;color:#434343;border:1px solid #BDC0BA;font-weight:500;'),
+      toggleImp: function () { self.setState({ onlyImp: !s.onlyImp }); },
+      showMenu: s.menu, toggleMenu: function () { self.setState({ menu: !s.menu, pick: null }); },
+      impSwitch: 'flex:none;width:44px;height:26px;border-radius:13px;position:relative;' + (s.onlyImp ? 'background:#1C1C1C;' : 'background:#BDC0BA;'),
+      impKnob: 'position:absolute;top:3px;width:20px;height:20px;border-radius:10px;background:#FFFFFB;' + (s.onlyImp ? 'left:21px;' : 'left:3px;'),
+      hasPick: !!pk, pickV: pickV,
+      openPick: function () { self.setState({ pick: { cur: s.anchor }, menu: false }); },
+      closePick: function () { self.setState({ pick: null }); },
+      pickPrev: function () { stepPick(-1); }, pickNext: function () { stepPick(1); },
+      pickToday: function () { self.setState({ anchor: iso(TODAY), pick: null }); },
+      pickExpanded: pk ? 'true' : 'false',
+      winShort: winShort, winFull: w.title,
+      hasList: !!s.list, listTitle: s.list ? s.list.title : '', listItems: listItems,
+      closeList: function () { self.setState({ list: null }); },
+      hasDetail: !!det, detail: detail,
+      closeDetail: function () { self.setState({ detail: null }); },
+      editDetail: function () { if (det) self.openForm('edit', det, det.id); },
+      removeDetail: function () { var id = s.detail; self.setState({ detail: null, events: self.state.events.filter(function (e) { return e.id !== id; }) }); self.flash('已刪除'); },
+      hasForm: !!f, form: form, fChips: fChips,
+      fSet: { title: mk('title'), who: mk('who'), start: mk('start'), end: mk('end'), label: mk('label'), loc: mk('loc'), note: mk('note') },
+      showEnd: form.prec !== 'd', showLabel: form.prec === 'a',
+      formHeading: !f ? '' : f.mode === 'add' ? '新增事件' : f.mode === 'edit' ? '編輯事件' : '編輯後核准',
+      saveText: f && f.mode === 'review' ? '核准加入' : '儲存',
+      hasFormError: !!s.formError, formError: s.formError,
+      openAdd: function () { self.openForm('add', { start: iso(TODAY) }); },
+      closeForm: function () { self.setState({ form: null, formError: '' }); },
+      saveForm: function () {
+        var g = self.state.form;
+        if (!g.title.trim() || !g.start) { self.setState({ formError: '請填寫標題與開始日期' }); return; }
+        var st = g.start, en = g.prec === 'd' ? g.start : (g.end || g.start);
+        if (en < st) { var t = st; st = en; en = t; }
+        var label = g.prec === 'a' ? (g.label.trim() || autoLabel('r', st, en)) : autoLabel(g.prec, st, en);
+        var ev = { id: g.mode === 'edit' ? g.refId : 'n' + Date.now(), cat: g.cat, start: st, end: en, prec: g.prec, label: label, who: g.who.trim(), title: g.title.trim(), loc: g.loc.trim(), note: g.note, sure: g.sure, imp: g.imp };
+        var events = g.mode === 'edit' ? self.state.events.map(function (e) { return e.id === ev.id ? ev : e; }) : self.state.events.concat([ev]);
+        var pend = g.mode === 'review' ? self.state.pending.filter(function (q) { return q.id !== g.refId; }) : self.state.pending;
+        var patch = { events: events, pending: pend, form: null, formError: '' };
+        if (g.mode === 'add') patch.anchor = st;
+        self.setState(patch);
+        self.flash(g.mode === 'edit' ? '已更新' : '已加入時間軸');
+      },
+      pending: pending, pendingCount: s.pending.length, hasPending: s.pending.length > 0, noPending: s.pending.length === 0,
+      goTimeline: function () { self.setState({ tab: 'timeline' }); },
+      goReview: function () { self.setState({ tab: 'review', menu: false }); },
+      tlPressed: tl ? 'true' : 'false', rvPressed: tl ? 'false' : 'true',
+      tlStyle: tabBase + (tl ? 'color:#005CAF;font-weight:700;' : 'color:#656765;font-weight:500;'),
+      rvStyle: tabBase + (tl ? 'color:#656765;font-weight:500;' : 'color:#005CAF;font-weight:700;'),
+      hasToast: !!s.toast, toast: s.toast
+    };
+  }
+}
+
+</script>
+</body>
+</html>
