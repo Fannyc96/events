@@ -16,7 +16,7 @@ npm install
 npm run dev      # http://localhost:5173/events/（需要 .env.local）
 npm test         # Vitest 單元測試
 npm run build    # tsc 型別檢查 + vite build → dist/
-npm run search:export   # 自動搜尋用（需要 SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY）
+npm run search:export   # 自動搜尋用（需要 Node 22+、SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY）
 npm run search:import   # 另需 TODAY=YYYY-MM-DD
 ```
 

@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22 以上才有內建 WebSocket；supabase-js 在 Node 20 會直接報錯
+          node-version: 22
           cache: npm
       - run: npm ci
 
