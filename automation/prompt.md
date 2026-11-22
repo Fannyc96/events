@@ -9,9 +9,11 @@
 2. 讀 `automation/out/existing.json`：已經在資料庫裡的事件（含已略過的）。**這些不要再提出來**。
 3. 依序處理 6 個分類：`international`、`allied`、`adversary`、`cross_strait`、`defense`、`trade_tech`。每個分類：
    - 用 WebSearch 搜尋，**每次都要把 `allowed_domains` 設成設定檔的 `allowedDomains` 整份清單**。
+     如果工具回報某些網域無法使用，把那些網域從清單拿掉後繼續，不要因此停下來。
    - 每個分類最多搜尋 `maxSearchesPerCategory` 次；必要時可以用 WebFetch 打開 1–2 篇文章確認日期，但不要更多。
    - 每個分類最多提出 `maxCandidatesPerCategory` 件，寧缺勿濫。找不到就是 0 件。
 4. 把所有候選寫成 **一個 JSON 陣列**，用 Write 工具存到 `automation/out/candidates.json`。即使 0 件也要寫 `[]`。
+   寫完後用 Read 檢查一次；有錯就用 Edit 修正。標題要乾淨，不要留下自問自答或修改痕跡（例：「二十大？不，二十一大」要寫成「中共二十一大」）。
 5. 完成後，用一兩句話說明各分類找到幾件。
 
 ## 收錄標準

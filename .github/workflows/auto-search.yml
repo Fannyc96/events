@@ -49,7 +49,7 @@ jobs:
             --model sonnet
             --max-turns 60
             --permission-mode default
-            --allowedTools "WebSearch,WebFetch,Read,Write"
+            --allowedTools "WebSearch,WebFetch,Read,Write,Edit"
 
       - name: Import candidates as pending
         run: npm run search:import
