@@ -2,7 +2,7 @@ import { useSearchRun } from '../hooks/useSearchRun';
 import { categoryOf, PRECISION_TEXT } from '../lib/categories';
 import { statusText } from '../lib/searchTrigger';
 import type { EventRow } from '../lib/types';
-import { ChevronLeft } from './Icons';
+import { TimelineIcon } from './Icons';
 
 interface Props {
   pending: EventRow[];
@@ -23,12 +23,6 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
 
   return (
     <div className="review">
-      <div className="review-bar">
-        <button className="icon-btn" aria-label="回時間軸" onClick={onBack}>
-          <ChevronLeft />
-        </button>
-        <h1>待審核（{pending.length}）</h1>
-      </div>
       <div className="review-scroll">
         <div className="review-list">
           <p className="review-intro">新聞自動擷取的候選事件，可先編輯細項再核准</p>
@@ -105,6 +99,13 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
             );
           })}
         </div>
+      </div>
+      {/* 頁首放在最下面；回時間軸在右邊 */}
+      <div className="review-bar">
+        <h1>待審核（{pending.length}）</h1>
+        <button className="icon-btn" aria-label="回時間軸" onClick={onBack}>
+          <TimelineIcon />
+        </button>
       </div>
     </div>
   );

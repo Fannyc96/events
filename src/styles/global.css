@@ -85,14 +85,15 @@ a:focus-visible {
 
 /* ---------- 頂部列（52px） ---------- */
 .topbar {
+  /* 頁首在畫面最下面；加上 iPhone 底部安全區 */
   flex: none;
-  height: 52px;
+  height: calc(52px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 6px 6px 6px 4px;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom)) 4px;
   background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .topbar-title {
@@ -387,7 +388,7 @@ a:focus-visible {
 .fab {
   position: absolute;
   right: 14px;
-  bottom: calc(18px + env(safe-area-inset-bottom));
+  bottom: calc(52px + 18px + env(safe-area-inset-bottom)); /* 在底部頁首之上 */
   z-index: 9;
   width: 52px;
   height: 52px;
@@ -410,8 +411,9 @@ a:focus-visible {
 }
 
 .popover {
+  /* 從底部頁首往上彈出 */
   position: absolute;
-  top: 50px;
+  bottom: calc(50px + env(safe-area-inset-bottom));
   z-index: 10;
   background: var(--card);
   border: 1px solid var(--line);
@@ -897,12 +899,13 @@ a:focus-visible {
 .review-bar {
   flex: none;
   background: var(--bg);
-  height: 52px;
+  height: calc(52px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
-  padding: 6px 8px 6px 4px;
-  border-bottom: 1px solid var(--line);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom)) 16px;
+  border-top: 1px solid var(--line);
 }
 .review-bar h1 {
   margin: 0;
@@ -1036,7 +1039,7 @@ a:focus-visible {
 .toast {
   position: absolute;
   left: 50%;
-  bottom: calc(88px + env(safe-area-inset-bottom));
+  bottom: calc(52px + 88px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 40;
   background: var(--ink);

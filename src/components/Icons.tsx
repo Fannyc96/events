@@ -45,3 +45,9 @@ export const Plus = () => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
+/** 時間軸：三條錯開的橫條（甘特圖） */
+export const TimelineIcon = () => (
+  <svg width={22} height={22} strokeWidth={2.2} {...base}>
+    <path d="M4 6h9M8 12h12M4 18h7" />
+  </svg>
+);

@@ -130,6 +130,10 @@ export function App() {
 
   return (
     <div className="app">
+
+      <Timeline win={win} today={today} events={visible} onOpenEvent={openEvent} onOpenList={openList} />
+
+      {/* 頁首放在畫面最下面 */}
       <TopBar
         title={titleShort(win)}
         titleFull={titleFull(win)}
@@ -147,8 +151,6 @@ export function App() {
         }}
         onMenu={() => setPopover(popover === 'menu' ? null : 'menu')}
       />
-
-      <Timeline win={win} today={today} events={visible} onOpenEvent={openEvent} onOpenList={openList} />
 
       {(loading && events.length === 0) || error ? (
         <div className="tl-status" role={error ? 'alert' : 'status'}>
