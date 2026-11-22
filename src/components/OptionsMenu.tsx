@@ -18,7 +18,7 @@ const LEGEND: [CSSProperties, string][] = [
   [{ background: 'var(--card)', border: `1.5px solid ${MAIN}` }, '一般'],
   [{ background: LIGHT, border: `2px solid ${MAIN}` }, '重要：淺色實底＋粗框'],
   [{ background: 'var(--card)', border: `1.5px dashed ${MAIN}` }, '未確定：虛線框'],
-  [{ background: 'var(--card)', border: `1.5px solid ${MAIN}`, ...FADE }, '大致日期：兩端淡出'],
+  [{ background: 'var(--card)', border: `1.5px solid ${MAIN}`, borderLeftWidth: 0, borderRightWidth: 0, ...FADE }, '大致日期：兩端淡出、無左右框'],
   [{ height: 12, background: MAIN + '24', borderRadius: 3, ...FADE }, '橫跨大半區間的大致事件'],
 ];
 

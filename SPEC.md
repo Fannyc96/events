@@ -119,7 +119,7 @@
 | 一般 | 胡粉白底，1.5px 主色實線框 |
 | 重要 | 淺色實底，2px 主色框 |
 | 未確定 | 框線改成虛線（dashed） |
-| 大致日期 | 左右兩端淡出：`mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent)`，左右內距 12px |
+| 大致日期 | **［2026-11-22］左右框線完全拿掉**，並且左右兩端淡出：`mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent)`，左右內距 12px |
 
 細條：主色 14% 透明度底（重要時用淺色底、粗體），兩端淡出，10px 字；未確定時加 1px 虛線外框。
 
