@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "search:export": "tsx scripts/export-existing.ts",
+    "search:import": "tsx scripts/import-candidates.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",
@@ -16,9 +18,11 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/node": "^20.19.43",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.23.15",
     "typescript": "~5.6.3",
     "vite": "^5.4.21",
     "vitest": "^2.1.9"

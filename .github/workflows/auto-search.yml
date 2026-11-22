@@ -1,0 +1,63 @@
+name: Auto search
+
+# 不排程：由網站待審核頁的「立即搜尋」按鈕（經 Supabase Edge Function）觸發，
+# 或在 GitHub Actions 頁面手動按 Run workflow。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-search
+  cancel-in-progress: false
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - id: today
+        run: echo "date=$(TZ=Asia/Taipei date +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Export existing events
+        run: npm run search:export
+
+      # 用 Claude 訂閱額度（claude setup-token 產生的 token），不走 API 計費
+      - name: Search with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            今天是 ${{ steps.today.outputs.date }}（台灣時間）。
+            請讀取 automation/prompt.md，完全照裡面的指示做，最後把結果寫到 automation/out/candidates.json。
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 60
+            --permission-mode default
+            --allowedTools "WebSearch,WebFetch,Read,Write"
+
+      - name: Import candidates as pending
+        run: npm run search:import
+        env:
+          TODAY: ${{ steps.today.outputs.date }}
+
+      - name: Keep raw output for debugging
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-search-${{ steps.today.outputs.date }}
+          path: automation/out/
+          if-no-files-found: ignore
+          retention-days: 14

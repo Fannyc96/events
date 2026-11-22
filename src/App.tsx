@@ -55,6 +55,8 @@ export function App() {
   }, []);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  const reloadQuiet = useCallback(() => void reload(), [reload]);
+
   const win = useMemo(() => windowOf(scale, anchor), [scale, anchor]);
   const visible = useMemo(() => (onlyImportant ? events.filter((e) => e.important) : events), [events, onlyImportant]);
   const byId = useMemo(() => new Map([...events, ...pending].map((e) => [e.id, e])), [events, pending]);
@@ -190,6 +192,8 @@ export function App() {
             onSkip={(e) => void review(e, 'dismissed')}
             onApprove={(e) => void review(e, 'approved')}
             onEdit={(e) => openForm('review', formFromEvent(e), e.id)}
+            onReload={reloadQuiet}
+            flash={flash}
           />
           <AddButton onClick={() => openForm('add', emptyForm(today))} />
         </>

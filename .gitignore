@@ -9,3 +9,6 @@ dist
 .env.*
 !.env.example
 *.tsbuildinfo
+
+# 自動搜尋的暫存輸出
+automation/out

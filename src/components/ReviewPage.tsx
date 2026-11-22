@@ -1,4 +1,6 @@
+import { useSearchRun } from '../hooks/useSearchRun';
 import { categoryOf, PRECISION_TEXT } from '../lib/categories';
+import { statusText } from '../lib/searchTrigger';
 import type { EventRow } from '../lib/types';
 import { ChevronLeft } from './Icons';
 
@@ -9,10 +11,16 @@ interface Props {
   onSkip: (e: EventRow) => void;
   onEdit: (e: EventRow) => void;
   onApprove: (e: EventRow) => void;
+  /** 自動搜尋結束時重新讀取事件 */
+  onReload: () => void;
+  flash: (msg: string, ms?: number) => void;
 }
 
 /** 待審核頁（SPEC 第 6 節） */
-export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove }: Props) {
+export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove, onReload, flash }: Props) {
+  const search = useSearchRun(onReload, flash);
+  const failed = search.run && search.run.status === 'completed' && search.run.conclusion !== 'success';
+
   return (
     <div className="review">
       <div className="review-bar">
@@ -24,6 +32,22 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove 
       <div className="review-scroll">
         <div className="review-list">
           <p className="review-intro">新聞自動擷取的候選事件，可先編輯細項再核准</p>
+          <div className="search-row">
+            <span className="search-status" role="status">
+              {!search.loaded ? '讀取搜尋狀態…' : search.error ? search.error : statusText(search.run)}
+              {failed && search.run?.html_url && (
+                <>
+                  {' '}
+                  <a href={search.run.html_url} target="_blank" rel="noopener noreferrer">
+                    看紀錄
+                  </a>
+                </>
+              )}
+            </span>
+            <button className="btn btn-primary search-btn" disabled={search.busy || search.running} onClick={() => void search.start()}>
+              {search.running ? '搜尋中…' : search.busy ? '送出中…' : '立即搜尋'}
+            </button>
+          </div>
           {pending.length === 0 && <p className="review-empty">全部審核完畢</p>}
           {pending.map((p) => {
             const cat = categoryOf(p.category);

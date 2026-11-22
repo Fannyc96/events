@@ -1,0 +1,6 @@
+# 只用來記錄 Edge Function 設定；資料表由 seed.sql 建立。
+project_id = "imcscbmszrehzaozamkx"
+
+[functions.trigger-search]
+# 網站用 publishable key 呼叫（不是 JWT），所以關掉 JWT 驗證
+verify_jwt = false

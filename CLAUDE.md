@@ -8,6 +8,7 @@
   SPEC 裡寫「只有管理者看得到」的地方，一律當成「所有人都看得到、都能用」。
 - `prototype-mobile.html`：已定案的手機版原型。這是設計工具的格式，不能直接執行：版面看 `<x-dc>`，排列邏輯看 `<script data-dc-script>` 的 `renderVals()`。
 - `seed.sql`：資料表、RLS（開放權限）和 43 筆初始資料。`supabase/open-access.sql` 只用在「已經跑過舊版 seed.sql」的專案。
+- 自動搜尋：見 SPEC 第 8 節開頭的變更說明（用訂閱額度、按鈕觸發、不排程）。
 
 ## 指令
 ```bash
@@ -15,21 +16,32 @@ npm install
 npm run dev      # http://localhost:5173/events/（需要 .env.local）
 npm test         # Vitest 單元測試
 npm run build    # tsc 型別檢查 + vite build → dist/
+npm run search:export   # 自動搜尋用（需要 SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY）
+npm run search:import   # 另需 TODAY=YYYY-MM-DD
 ```
 
 ## 技術與架構
 - Vite + React 18 + TypeScript（strict），不用路由、不用狀態管理套件。`App.tsx` 用 `useState` 管所有畫面狀態。
 - Supabase：前端只用 anon key，權限全靠 RLS。`src/lib/api.ts` 是唯一碰資料庫的地方；寫入成功後呼叫 `reload()` 重抓全部資料（不做樂觀更新）。
 - 部署：push 到 `main` → `.github/workflows/deploy.yml`（測試 → build → GitHub Pages）。Vite `base` 是 `/events/`。
+- 自動搜尋流程：待審核頁「立即搜尋」→ Supabase Edge Function `supabase/functions/trigger-search`（持有 `GH_DISPATCH_TOKEN`，60 分鐘冷卻）→
+  `.github/workflows/auto-search.yml`：`search:export` 匯出既有事件 → claude-code-action（Sonnet，訂閱 token，只允許 WebSearch/WebFetch/Read/Write）
+  依 `automation/prompt.md` 產生 `automation/out/candidates.json` → `search:import` 用 `src/lib/candidates.ts` 驗證＋去重後寫入 `pending`。
+  - 調整搜尋：改 `automation/search-config.json`（允許網域、分類說明、次數上限）或 `automation/prompt.md`。
+  - Edge Function 是 Deno，不在 tsconfig 範圍內；改了要到 Supabase 重新部署（JWT 驗證要關閉）。
 
 ```
-src/lib/        純邏輯（不碰 React）：types、categories、dates、layout、form、api、supabase
-src/hooks/      useEvents
+src/lib/        純邏輯（不碰 React）：types、categories、dates、layout、form、candidates、api、supabase、searchTrigger
+src/hooks/      useEvents、useSearchRun
+scripts/        自動搜尋的匯出／匯入（tsx 執行）
+automation/     搜尋設定與給 Claude 的指示；out/ 是暫存輸出（不進 git）
+supabase/       open-access.sql、functions/trigger-search（Deno Edge Function）
 src/components/ 每個畫面一個元件；cardStyle.ts 放卡片樣式
 src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 ```
 
 ## 慣例
+- **候選事件的驗證與去重只寫在 `src/lib/candidates.ts`**，改規則要一起改 `candidates.test.ts`。
 - **排列規則只寫在 `src/lib/layout.ts`**（細條、兩排卡片、+N、切斷），改規則時要一起改 `layout.test.ts`。
 - 日期一律用 `YYYY-MM-DD` 字串，轉 Date 用 `parseDate()`（本地午夜），不要用 `new Date('2026-11-21')`（會變成 UTC）。「今天」以裝置本地時間為準。
 - 分類的順序與顏色只在 `src/lib/categories.ts`；中性色在 `global.css` 的 `:root`。顏色都取自 nipponcolors.com。
@@ -38,19 +50,19 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 - 6 個分類列平分畫面高度，永遠不垂直捲動；卡片排 `minmax(26px, 38px)`，畫面高度 ≤ 805px 時卡片文字只顯示 1 行。
 - 刪除前一定要先確認（`ConfirmDialog`）。
 - UI 文字用繁體中文。
-- **金鑰不進 git**：`.env.local` 已被 ignore；GitHub 上用 repo Secrets `VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY`。`SUPABASE_SERVICE_ROLE_KEY`、`ANTHROPIC_API_KEY` 只能放在 GitHub Secrets，絕不能出現在前端。
+- **金鑰不進 git**：`.env.local` 已被 ignore；GitHub 上用 repo Secrets `VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY`。`SUPABASE_SERVICE_ROLE_KEY`、`CLAUDE_CODE_OAUTH_TOKEN` 只能放在 GitHub Secrets；`GH_DISPATCH_TOKEN` 只放在 Supabase Edge Function Secrets。這些絕不能出現在前端。
 
 ## 已知取捨
 - 權限完全開放：任何知道網址的人都能改或刪資料（使用者的決定）。
 - `dismissed` 的事件前端讀不到，只留給自動搜尋去重用（service role 不受 RLS 限制）。
 - 待審核卡片不顯示新聞摘要（資料表沒有這個欄位，使用者決定不加）。
+- 「立即搜尋」任何人都能按（使用者的決定），只靠「進行中不能按、60 分鐘冷卻」限制用量。
+- `CLAUDE_CODE_OAUTH_TOKEN` 綁定使用者個人的 Claude 訂閱，搜尋會占用訂閱的使用額度。
 
 ## 進度
 - [x] 第 1 步：專案骨架、Supabase、GitHub Pages 部署
 - [x] 第 2 步：時間軸（週／月／年、小日曆、⋯ 選單、詳情、清單）
 - [x] 第 3 步：新增、編輯、刪除（不做登入）
 - [x] 第 4 步：待審核頁
-- [ ] **第 5 步（下一步）**：自動搜尋腳本＋ GitHub Actions 每日排程（SPEC 第 8 節）
-  - 需要 GitHub Secrets：`SUPABASE_SERVICE_ROLE_KEY`、`ANTHROPIC_API_KEY`
-  - `allowed_domains` 放在設定檔；去重時要比對 pending／approved／dismissed 三種
-- [ ] 第 6 步：電腦版（寬螢幕欄寬平均分配、詳情與表單改成右側 420px 抽屜、頂部列加「新增事件」文字按鈕）與 PWA
+- [x] 第 5 步：自動搜尋（按鈕觸發、訂閱額度，見上）
+- [ ] **第 6 步（下一步）**：電腦版（寬螢幕欄寬平均分配、詳情與表單改成右側 420px 抽屜、頂部列加「新增事件」文字按鈕）與 PWA

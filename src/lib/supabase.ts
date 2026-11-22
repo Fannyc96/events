@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+export const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+export const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 /** 環境變數缺少時為 null，畫面會顯示設定說明，而不是直接壞掉 */
 export const supabase: SupabaseClient | null =

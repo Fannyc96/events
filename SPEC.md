@@ -193,6 +193,13 @@
 
 ## 8. 自動搜尋（GitHub Actions，每天一次）
 
+> **［2026-11-22 變更］** 實作方式與下文不同，以這段為準：
+> - 不呼叫 Claude API，改用 `anthropics/claude-code-action` ＋ Claude 訂閱的 OAuth token（`CLAUDE_CODE_OAUTH_TOKEN`），額度從訂閱扣，不另外計費。搜尋用 Claude Code 內建的 WebSearch（模型：Sonnet）。
+> - **不排程**：由待審核頁的「立即搜尋」按鈕觸發（Supabase Edge Function `trigger-search` → GitHub `workflow_dispatch`）。任何人都能按；搜尋中不能再按，每小時最多一次。
+> - 6 個分類在同一次 Claude 執行裡依序處理；`max_uses`／`allowed_domains` 改成寫在 `automation/prompt.md` 的指示，並在匯入時再檢查一次來源網域。
+> - 不需要 `ANTHROPIC_API_KEY`。
+
+
 1. 對每個分類各發一次請求給 Claude API，啟用 `web_search` 工具：
    - 設 `max_uses` 限制搜尋次數（建議 3）。
    - 用 `allowed_domains` 限定可信的媒體與官方網站，清單請放在設定檔裡，方便之後調整。
