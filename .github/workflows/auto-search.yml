@@ -40,11 +40,13 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # 失敗時才看得到 Claude 的錯誤訊息
+          show_full_output: true
           prompt: |
             今天是 ${{ steps.today.outputs.date }}（台灣時間）。
             請讀取 automation/prompt.md，完全照裡面的指示做，最後把結果寫到 automation/out/candidates.json。
           claude_args: |
-            --model claude-sonnet-5-5
+            --model sonnet
             --max-turns 60
             --permission-mode default
             --allowedTools "WebSearch,WebFetch,Read,Write"
