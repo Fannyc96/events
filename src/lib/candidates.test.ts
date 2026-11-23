@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedSource, isDuplicate, normalizeTitle, planImport, titleSimilarity, validateCandidate, type ExistingEvent } from './candidates';
+import { diffFields, isAllowedSource, isDuplicate, normalizeTitle, planImport, planUpdates, titleSimilarity, validateCandidate, type ExistingEvent } from './candidates';
 
 const TODAY = '2026-11-22';
 const DOMAINS = ['reuters.com', 'focustaiwan.tw', 'nato.int'];
@@ -156,5 +156,67 @@ describe('planImport', () => {
       expect.stringContaining('重複'),
       expect.stringContaining('網域'),
     ]);
+  });
+});
+
+describe('planUpdates（更新既有事件）', () => {
+  const original = {
+    id: 'orig',
+    status: 'approved',
+    update_of: null,
+    category: 'international' as const,
+    stakeholder: 'G7',
+    title: 'Summit',
+    start_date: '2027-06-01',
+    end_date: '2027-06-30',
+    date_precision: 'approx' as const,
+    date_label: 'Jun?',
+    confirmed: false,
+    important: true,
+    location: null,
+    note: null,
+  };
+  const upd = (over: Record<string, unknown> = {}) => ({
+    ...original,
+    id: undefined,
+    status: undefined,
+    update_of: 'orig',
+    source_url: 'https://www.reuters.com/x',
+    ai_reason: '官方公布地點',
+    ...over,
+  });
+
+  it('有變更的欄位才接受，並列出變更欄位', () => {
+    const r = planUpdates([upd({ location: 'Doral, Miami' })], [original], TODAY, []);
+    expect(r.accepted).toHaveLength(1);
+    expect(r.accepted[0].changed).toEqual(['location']);
+    expect(r.accepted[0].proposal.update_of).toBe('orig');
+  });
+
+  it('日期確定：日期類型、日期、狀態都算變更', () => {
+    const r = planUpdates(
+      [upd({ date_precision: 'range', start_date: '2027-06-14', end_date: '2027-06-16', confirmed: true })],
+      [original],
+      TODAY,
+      [],
+    );
+    expect(r.accepted[0].changed).toEqual(['start_date', 'end_date', 'date_precision', 'date_label', 'confirmed']);
+  });
+
+  it('沒有變更、找不到原事件、原事件不是已核准 → 略過', () => {
+    expect(planUpdates([upd()], [original], TODAY, []).rejected[0].reason).toContain('沒有變更');
+    expect(planUpdates([upd({ update_of: 'nope' })], [original], TODAY, []).rejected[0].reason).toContain('找不到');
+    expect(planUpdates([upd({ location: 'x' })], [{ ...original, status: 'pending' }], TODAY, []).rejected[0].reason).toContain('找不到');
+  });
+
+  it('已有相同內容的更新建議（含已略過）→ 不重複提出', () => {
+    const prev = { ...original, id: 'p1', status: 'dismissed', update_of: 'orig', location: 'Doral, Miami' };
+    const r = planUpdates([upd({ location: 'Doral, Miami' })], [original, prev], TODAY, []);
+    expect(r.accepted).toHaveLength(0);
+    expect(r.rejected[0].reason).toContain('已提過');
+  });
+
+  it('diffFields：空字串與 null 視為相同', () => {
+    expect(diffFields({ ...original, location: '' } as never, original)).toEqual([]);
   });
 });

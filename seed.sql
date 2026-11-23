@@ -25,6 +25,7 @@ create table if not exists public.events (
   source_url text,
   ai_reason text,            -- 自動搜尋時 AI 對日期可靠度的說明，例如「新聞寫明日期」「依往年推估」
   manual_rank integer,       -- 手動排序（+N 清單長按拖曳）；小的優先，null＝預設排序
+  update_of uuid references public.events(id) on delete cascade, -- 自動搜尋的「更新建議」：指向要更新的既有事件
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (end_date >= start_date)
@@ -32,6 +33,7 @@ create table if not exists public.events (
 
 -- 舊專案補欄位用（新建的表已經有，這行不會出錯）
 alter table public.events add column if not exists manual_rank integer;
+alter table public.events add column if not exists update_of uuid references public.events(id) on delete cascade;
 
 create index if not exists events_range_idx on public.events (status, start_date, end_date);
 

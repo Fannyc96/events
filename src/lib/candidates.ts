@@ -188,3 +188,84 @@ export function planImport(raws: unknown[], existing: ExistingEvent[], today: st
   }
   return { accepted, rejected };
 }
+
+// ---------------------------------------------------------------------------
+// 更新既有事件：Claude 回傳帶 update_of（既有事件 id）的項目＝對那筆事件的修正建議。
+
+/** 比對的欄位（也是審核時要標紅字的欄位） */
+export const UPDATE_FIELDS = [
+  'category',
+  'stakeholder',
+  'title',
+  'start_date',
+  'end_date',
+  'date_precision',
+  'date_label',
+  'confirmed',
+  'important',
+  'location',
+  'note',
+] as const;
+export type UpdateField = (typeof UPDATE_FIELDS)[number];
+
+type Comparable = Pick<EventInput, UpdateField>;
+
+const norm = (v: unknown) => (v === undefined || v === '' ? null : v);
+
+/** 建議值和原本值不同的欄位 */
+export function diffFields(original: Comparable, proposal: Comparable): UpdateField[] {
+  return UPDATE_FIELDS.filter((k) => norm(original[k]) !== norm(proposal[k]));
+}
+
+export interface UpdateTarget extends Comparable {
+  id: string;
+  status: string;
+  update_of?: string | null;
+}
+
+export interface UpdateProposal extends Candidate {
+  update_of: string;
+}
+
+export interface UpdatePlan {
+  accepted: { proposal: UpdateProposal; changed: UpdateField[] }[];
+  rejected: { raw: unknown; reason: string }[];
+}
+
+/**
+ * 驗證更新建議：
+ * - update_of 要指向一筆已核准的事件
+ * - 欄位驗證同新事件（validateCandidate）
+ * - 跟原本完全一樣（沒有變更）→ 略過
+ * - 同一筆事件已有內容相同的更新建議（待審核或已略過）→ 略過，避免重複提出
+ */
+export function planUpdates(raws: unknown[], rows: UpdateTarget[], today: string, allowedDomains: string[]): UpdatePlan {
+  const accepted: UpdatePlan['accepted'] = [];
+  const rejected: UpdatePlan['rejected'] = [];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const raw of raws) {
+    const id = str((raw as Record<string, unknown>)?.update_of);
+    const original = byId.get(id);
+    if (!original || original.status !== 'approved' || original.update_of) {
+      rejected.push({ raw, reason: `找不到要更新的已核准事件：${id || '（空白）'}` });
+      continue;
+    }
+    const v = validateCandidate(raw, today, allowedDomains);
+    if (!v.ok) {
+      rejected.push({ raw, reason: v.reason });
+      continue;
+    }
+    const changed = diffFields(original, v.value);
+    if (changed.length === 0) {
+      rejected.push({ raw, reason: `沒有變更：${original.title}` });
+      continue;
+    }
+    const proposals = [...rows.filter((r) => r.update_of === id), ...accepted.map((a) => a.proposal)];
+    if (proposals.some((p) => (p as { update_of?: string | null }).update_of === id && diffFields(p, v.value).length === 0)) {
+      rejected.push({ raw, reason: `已提過相同的更新：${original.title}` });
+      continue;
+    }
+    accepted.push({ proposal: { ...v.value, update_of: id }, changed });
+  }
+  return { accepted, rejected };
+}

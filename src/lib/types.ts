@@ -33,6 +33,8 @@ export interface EventRow {
   ai_reason: string | null;
   /** 手動排序（在 +N 清單長按拖曳設定）；數字小的優先，null＝用預設排序 */
   manual_rank?: number | null;
+  /** 自動搜尋提出的「更新建議」：指向要更新的既有事件 id；null＝新事件 */
+  update_of?: string | null;
   created_at?: string;
   updated_at?: string;
 }

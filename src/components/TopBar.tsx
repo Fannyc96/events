@@ -1,5 +1,5 @@
 import type { Scale } from '../lib/types';
-import { ChevronDown, ChevronLeft, ChevronRight, Dots, Inbox } from './Icons';
+import { ChevronDown, ChevronLeft, ChevronRight, Dots, Inbox, SearchIcon } from './Icons';
 
 interface Props {
   title: string;
@@ -13,6 +13,7 @@ interface Props {
   onOpenPicker: () => void;
   onScale: (s: Scale) => void;
   onReview: () => void;
+  onSearch: () => void;
   onMenu: () => void;
 }
 
@@ -41,6 +42,9 @@ export function TopBar(p: Props) {
           </button>
         ))}
       </div>
+      <button className="icon-btn" aria-label="搜尋事件" onClick={p.onSearch}>
+        <SearchIcon />
+      </button>
       <button className="icon-btn" aria-label={`待審核 ${p.pendingCount} 件`} onClick={p.onReview}>
         <Inbox />
         {p.pendingCount > 0 && <span className="badge">{p.pendingCount}</span>}

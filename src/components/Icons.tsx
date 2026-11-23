@@ -51,3 +51,9 @@ export const TimelineIcon = () => (
     <path d="M4 6h9M8 12h12M4 18h7" />
   </svg>
 );
+export const SearchIcon = () => (
+  <svg width={20} height={20} strokeWidth={2} {...base}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M20 20l-4.2-4.2" />
+  </svg>
+);

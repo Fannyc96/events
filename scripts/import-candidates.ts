@@ -2,7 +2,7 @@
 // 6 個分類分開搜尋，各自的結果在 automation/out/parts/candidates-<分類>/candidates.json；
 // 沒有 parts 資料夾時，讀 automation/out/candidates.json（本機測試用）。
 import { appendFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
-import { planImport, type ExistingEvent } from '../src/lib/candidates';
+import { planImport, planUpdates, type ExistingEvent, type UpdateTarget } from '../src/lib/candidates';
 import { adminClient, OUT_DIR } from './env';
 
 const today = process.env.TODAY;
@@ -34,13 +34,27 @@ for (const f of files) {
 
 const db = adminClient();
 // 重新讀一次（不用 existing.json），避免搜尋期間有人新增了事件
-const { data: existing, error } = await db.from('events').select('category, stakeholder, title, start_date, end_date');
+const { data: existing, error } = await db
+  .from('events')
+  .select('id, category, stakeholder, title, start_date, end_date, date_precision, date_label, confirmed, important, location, note, status, update_of');
 if (error) throw new Error(error.message);
 
-const plan = planImport(raws, existing as ExistingEvent[], today, config.allowedDomains ?? []);
+const domains = config.allowedDomains ?? [];
+const isUpdate = (r: unknown) => !!(r as Record<string, unknown> | null)?.update_of;
+// 新事件：去重時不看「更新建議」列（它們是既有事件的副本）
+const plan = planImport(
+  raws.filter((r) => !isUpdate(r)),
+  (existing as UpdateTarget[]).filter((e) => !e.update_of) as ExistingEvent[],
+  today,
+  domains,
+);
+const updates = planUpdates(raws.filter(isUpdate), existing as UpdateTarget[], today, domains);
 
-if (plan.accepted.length) {
-  const rows = plan.accepted.map((c) => ({ ...c, status: 'pending', origin: 'auto' }));
+const rows = [
+  ...plan.accepted.map((c) => ({ ...c, status: 'pending', origin: 'auto' })),
+  ...updates.accepted.map((u) => ({ ...u.proposal, status: 'pending', origin: 'auto' })),
+];
+if (rows.length) {
   const { error: insErr } = await db.from('events').insert(rows);
   if (insErr) throw new Error(insErr.message);
 }
@@ -48,12 +62,13 @@ if (plan.accepted.length) {
 const lines = [
   `## 自動搜尋結果（${today}）`,
   '',
-  `Claude 提出 ${raws.length} 件，加入待審核 **${plan.accepted.length}** 件，略過 ${plan.rejected.length} 件。`,
+  `Claude 提出 ${raws.length} 件：新事件 **${plan.accepted.length}** 件、更新建議 **${updates.accepted.length}** 件加入待審核，略過 ${plan.rejected.length + updates.rejected.length} 件。`,
   '',
   `各分類：${fileNotes.join('、')}`,
   '',
   ...plan.accepted.map((c) => `- ✅ [${c.category}] ${c.stakeholder ?? ''} ${c.title}（${c.date_label}）— ${c.ai_reason}`),
-  ...plan.rejected.map((r) => {
+  ...updates.accepted.map((u) => `- 🔄 更新 ${u.proposal.stakeholder ?? ''} ${u.proposal.title}：${u.changed.join('、')} — ${u.proposal.ai_reason}`),
+  ...[...plan.rejected, ...updates.rejected].map((r) => {
     const o = (r.raw ?? {}) as Record<string, unknown>;
     return `- ⏭️ ${String(o.stakeholder ?? '')} ${String(o.title ?? '(無標題)')}：${r.reason}`;
   }),

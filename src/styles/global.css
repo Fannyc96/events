@@ -804,6 +804,28 @@ a:focus-visible {
   flex-direction: column;
   gap: 8px;
 }
+.search-body {
+  padding: 0 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.search-input {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--card);
+  width: 100%;
+}
+.search-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
 .list-items {
   display: flex;
   flex-direction: column;
@@ -992,6 +1014,11 @@ a:focus-visible {
   background: #7db9de;
   padding: 3px 8px;
   border-radius: 999px;
+}
+.update-note {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: -4px;
 }
 .review-card h2 {
   margin: 0;

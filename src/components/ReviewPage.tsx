@@ -1,4 +1,6 @@
 import { useSearchRun } from '../hooks/useSearchRun';
+import type { CSSProperties } from 'react';
+import { diffFields, type UpdateField } from '../lib/candidates';
 import { categoryOf } from '../lib/categories';
 import { statusText } from '../lib/searchTrigger';
 import type { EventRow } from '../lib/types';
@@ -6,6 +8,8 @@ import { TimelineIcon } from './Icons';
 
 interface Props {
   pending: EventRow[];
+  /** 已核准事件（更新建議要對照的原事件） */
+  originals: Map<string, EventRow>;
   busyId: string | null;
   onBack: () => void;
   onSkip: (e: EventRow) => void;
@@ -17,7 +21,7 @@ interface Props {
 }
 
 /** 待審核頁（SPEC 第 6 節） */
-export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove, onReload, flash }: Props) {
+export function ReviewPage({ pending, originals, busyId, onBack, onSkip, onEdit, onApprove, onReload, flash }: Props) {
   const search = useSearchRun(onReload, flash);
   const failed = search.run && search.run.status === 'completed' && search.run.conclusion !== 'success';
 
@@ -46,45 +50,60 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
           {pending.map((p) => {
             const cat = categoryOf(p.category);
             const busy = busyId === p.id;
+            // 更新建議：和原事件不同的欄位用紅字
+            const original = p.update_of ? originals.get(p.update_of) : undefined;
+            const changed = new Set<UpdateField>(original ? diffFields(original, p) : []);
+            const red = (...fs: UpdateField[]): CSSProperties | undefined =>
+              fs.some((f) => changed.has(f)) ? { color: 'var(--red)' } : undefined;
+            const dateChanged = red('start_date', 'end_date', 'date_precision', 'date_label');
             return (
               <article key={p.id} className="review-card">
                 <div className="review-meta">
-                  <span className="ai-tag">AI 建議</span>
+                  <span className="ai-tag">{original ? 'AI 更新建議' : 'AI 建議'}</span>
                   {p.ai_reason && <span style={{ color: 'var(--ink-2)' }}>{p.ai_reason}</span>}
                 </div>
                 {/* 沿用事件詳情的樣式：分類在標題上方 → 標題 → 狀態 tag → 日期、地點 */}
-                <span className="detail-cat" style={{ color: cat.main }}>
+                {original && <span className="update-note">更新既有事件，紅字為變更的內容</span>}
+                <span className="detail-cat" style={{ color: cat.main, ...red('category') }}>
                   <span className="swatch" style={{ background: cat.main }} />
                   {cat.name}
                 </span>
                 <h2>
                   {p.stakeholder && (
-                    <span className="who-tag" style={{ background: 'var(--card)', border: `2px solid ${cat.light}` }}>
+                    <span className="who-tag" style={{ background: 'var(--card)', border: `2px solid ${cat.light}`, ...red('stakeholder') }}>
                       {p.stakeholder}
                     </span>
                   )}
-                  {p.title}
+                  <span style={red('title')}>{p.title}</span>
                 </h2>
                 <div className="tags">
                   {/* 確定／一般也顯示：白底有框；未確定：虛線框；重要：分類淺色底 */}
-                  <span className="tag" style={{ border: `1px ${p.confirmed ? 'solid' : 'dashed'} ${cat.main}`, background: 'var(--card)' }}>
+                  <span className="tag" style={{ border: `1px ${p.confirmed ? 'solid' : 'dashed'} ${cat.main}`, background: 'var(--card)', ...red('confirmed') }}>
                     {p.confirmed ? '已確定' : '未確定'}
                   </span>
                   {p.important ? (
-                    <span className="tag" style={{ background: cat.light, border: `1px solid ${cat.light}`, fontWeight: 700 }}>
+                    <span className="tag" style={{ background: cat.light, border: `1px solid ${cat.light}`, fontWeight: 700, ...red('important') }}>
                       重要
                     </span>
                   ) : (
-                    <span className="tag" style={{ border: `1px solid ${cat.main}`, background: 'var(--card)' }}>
+                    <span className="tag" style={{ border: `1px solid ${cat.main}`, background: 'var(--card)', ...red('important') }}>
                       一般
                     </span>
                   )}
                 </div>
                 <dl className="dl">
                   <dt>日期</dt>
-                  <dd style={{ fontWeight: 700 }}>{p.date_label}</dd>
+                  <dd style={{ fontWeight: 700, ...dateChanged }}>{p.date_label}</dd>
                   <dt>地點</dt>
-                  <dd>{p.location || '—'}</dd>
+                  <dd style={red('location')}>{p.location || '—'}</dd>
+                  {(p.note || changed.has('note')) && (
+                    <>
+                      <dt>備註</dt>
+                      <dd className="note-box" style={red('note')}>
+                        {p.note || '（刪除備註）'}
+                      </dd>
+                    </>
+                  )}
                 </dl>
                 {(p.source_title || p.source_url) && (
                   <div className="review-source">

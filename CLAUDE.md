@@ -43,6 +43,8 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 
 ## 慣例
 - **候選事件的驗證與去重只寫在 `src/lib/candidates.ts`**，改規則要一起改 `candidates.test.ts`。
+- 更新建議：`update_of` 欄位；判斷變更欄位用 `candidates.ts` 的 `diffFields`／`planUpdates`（審核頁紅字也用同一個 `diffFields`）；核准走 `api.applyUpdate`。
+- 搜尋：`src/lib/search.ts`（純函式）＋ `SearchSheet`。
 - **排列規則只寫在 `src/lib/layout.ts`**（細條、兩排卡片、+N、切斷），改規則時要一起改 `layout.test.ts`。
 - 排序比較函式是 `layout.ts` 的 `compareEvents`（手動 `manual_rank` → 重要 → 明確日期 → 已確定 → 開始日 → 長度），卡片排與清單都用它。手動排序在 `EventList`（+N 清單長按拖曳，觸控用原生 touch 事件＋`passive:false` 才能擋捲動）→ `api.setManualOrder`。
 - 年視圖＝`dates.ts` 的 `windowOf('year')`：anchor 前一個月起 12 個月；`columnOf` 以起始月為 0 連續計算。電腦版年視圖欄寬＝`max(104, (可視寬 − 30) / 12)`（`Timeline` 用 ResizeObserver）。

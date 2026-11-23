@@ -7,11 +7,13 @@ import { EventForm, type FormMode } from './components/EventForm';
 import { EventList } from './components/EventList';
 import { OptionsMenu } from './components/OptionsMenu';
 import { ReviewPage } from './components/ReviewPage';
+import { SearchSheet } from './components/SearchSheet';
 import { Timeline } from './components/Timeline';
 import { Toast } from './components/Toast';
 import { TopBar } from './components/TopBar';
 import { useEvents } from './hooks/useEvents';
-import { createEvent, deleteEvent, setManualOrder, setStatus, updateEvent } from './lib/api';
+import { applyUpdate, createEvent, deleteEvent, setManualOrder, setStatus, updateEvent } from './lib/api';
+import { overlapsWindow } from './lib/layout';
 import { shiftAnchor, titleFull, titleShort, todayIso, windowOf } from './lib/dates';
 import { emptyForm, formFromEvent, type FormState } from './lib/form';
 import type { EventInput, EventRow, Scale } from './lib/types';
@@ -43,6 +45,7 @@ export function App() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [list, setList] = useState<ListState | null>(null);
   const [form, setForm] = useState<FormOpen | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState<EventRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -63,6 +66,9 @@ export function App() {
   const visible = useMemo(() => (onlyImportant ? events.filter((e) => e.important) : events), [events, onlyImportant]);
   const byId = useMemo(() => new Map([...events, ...pending].map((e) => [e.id, e])), [events, pending]);
   const detail = detailId ? byId.get(detailId) : undefined;
+  /** 已核准事件（更新建議要對照的原事件） */
+  const approvedById = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+  const eventIds = useMemo(() => new Set(events.map((e) => e.id)), [events]);
 
   const openEvent = useCallback((id: string) => {
     setList(null);
@@ -106,7 +112,12 @@ export function App() {
     try {
       if (form.mode === 'add') await createEvent(value);
       else if (form.mode === 'edit') await updateEvent(form.refId!, value);
-      else await updateEvent(form.refId!, { ...value, status: 'approved' });
+      else {
+        // 審核：一般候選＝核准；更新建議＝把編輯後的內容寫回原事件
+        const proposal = byId.get(form.refId!);
+        if (proposal?.update_of) await applyUpdate(proposal, eventIds.has(proposal.update_of), value);
+        else await updateEvent(form.refId!, { ...value, status: 'approved' });
+      }
       await reload();
       if (form.mode === 'add') setAnchor(value.start_date);
       setForm(null);
@@ -137,9 +148,15 @@ export function App() {
   const review = async (e: EventRow, status: 'approved' | 'dismissed') => {
     setBusyId(e.id);
     try {
-      await setStatus(e.id, status);
-      await reload();
-      flash(status === 'approved' ? '已加入時間軸' : '已略過');
+      if (status === 'approved' && e.update_of) {
+        await applyUpdate(e, eventIds.has(e.update_of));
+        await reload();
+        flash('已更新事件');
+      } else {
+        await setStatus(e.id, status);
+        await reload();
+        flash(status === 'approved' ? '已加入時間軸' : '已略過');
+      }
     } catch (err) {
       flash(`操作失敗：${errText(err)}`, 4000);
     } finally {
@@ -169,6 +186,10 @@ export function App() {
           setTab('review');
         }}
         onMenu={() => setPopover(popover === 'menu' ? null : 'menu')}
+        onSearch={() => {
+          setPopover(null);
+          setSearchOpen(true);
+        }}
       />
 
       {(loading && events.length === 0) || error ? (
@@ -208,6 +229,7 @@ export function App() {
         <>
           <ReviewPage
             pending={pending}
+            originals={approvedById}
             busyId={busyId}
             onBack={() => setTab('timeline')}
             onSkip={(e) => void review(e, 'dismissed')}
@@ -218,6 +240,19 @@ export function App() {
           />
           <AddButton onClick={() => openForm('add', emptyForm(today))} />
         </>
+      )}
+
+      {searchOpen && (
+        <SearchSheet
+          viewEvents={visible.filter((e) => overlapsWindow(e, win))}
+          allEvents={events}
+          today={today}
+          onOpen={(id) => {
+            setSearchOpen(false);
+            openEvent(id);
+          }}
+          onClose={() => setSearchOpen(false)}
+        />
       )}
 
       {list && (
