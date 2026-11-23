@@ -1,7 +1,8 @@
 # 未來事件自動搜尋：給 Claude 的工作指示
 
 你要替「未來事件追蹤」網站找出**今天（含）以後**才會發生的重要事件，產生候選清單給人工審核。
-今天的日期寫在啟動你的那段訊息裡（台灣時間）。
+今天的日期、以及**這次只負責的一個分類**，寫在啟動你的那段訊息裡（台灣時間）。
+6 個分類各由一個獨立的你同時處理，所以你只要專心做好被指定的那一個分類，其他分類不用管。
 
 **搜尋範圍：今天起到未來 `lookaheadMonths` 個月**（見設定檔；若啟動訊息另外指定了月數，以啟動訊息為準）。不要只搜當月，範圍內每個月都要涵蓋到。
 
@@ -9,16 +10,16 @@
 
 1. 讀 `automation/search-config.json`（分類說明、搜尋次數、搜尋範圍月數）。
 2. 讀 `automation/out/existing.json`：已經在資料庫裡的事件（含已略過的）。**這些不要再提出來**。
-3. 依序處理 6 個分類：`international`、`allied`、`adversary`、`cross_strait`、`defense`、`trade_tech`。每個分類：
+3. 只處理啟動訊息指定的那一個分類（`category` 一律填它）。做法：
    - 用 WebSearch 搜尋，**不限網域**（不要設 `allowed_domains`）。來源優先採用官方網站（政府、國際組織、主辦單位）與主要媒體；
      避免內容農場、論壇、社群貼文。
-   - 每個分類**至少搜尋 `minSearchesPerCategory` 次、最多 `maxSearchesPerCategory` 次**。不要搜到一點就停。
+   - **至少搜尋 `minSearchesPerCategory` 次、最多 `maxSearchesPerCategory` 次**。不要搜到一點就停；搜滿最少次數之前不要寫檔。
    - **每次用不同的關鍵字或子主題**，把分類說明裡的各項分開搜。例如 defense 分開搜「台灣軍演」「美日軍演」「軍購交付」；international 分開搜各個峰會、元首互訪、停火談判。
    - **語言**：台灣相關的分類（`cross_strait`、`defense`）要用**中文關鍵字**搜尋；其他分類中文、英文關鍵字都要用。
    - 關鍵字要帶上搜尋範圍內的月份或年份（例：「2026年12月」「January 2027」），範圍內的每個月都要涵蓋到。
    - 必要時可以用 WebFetch 打開 1–2 篇文章確認日期，但不要更多。
-   - 每個分類最多提出 `maxCandidatesPerCategory` 件，寧缺勿濫。找不到就是 0 件。
-4. 把所有候選寫成 **一個 JSON 陣列**，用 Write 工具存到 `automation/out/candidates.json`。即使 0 件也要寫 `[]`。
+   - 最多提出 `maxCandidatesPerCategory` 件，寧缺勿濫。找不到就是 0 件。
+4. 把這個分類的候選寫成 **一個 JSON 陣列**，用 Write 工具存到 `automation/out/candidates.json`。即使 0 件也要寫 `[]`。
    寫完後用 Read 檢查一次；有錯就用 Edit 修正。標題要乾淨，不要留下自問自答或修改痕跡（例：「二十大？不，二十一大」要寫成「中共二十一大」）。
 
 ## 收錄標準

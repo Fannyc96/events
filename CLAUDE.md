@@ -25,8 +25,9 @@ npm run search:import   # 另需 TODAY=YYYY-MM-DD
 - Supabase：前端只用 anon key，權限全靠 RLS。`src/lib/api.ts` 是唯一碰資料庫的地方；寫入成功後呼叫 `reload()` 重抓全部資料（不做樂觀更新）。
 - 部署：push 到 `main` → `.github/workflows/deploy.yml`（測試 → build → GitHub Pages）。Vite `base` 是 `/events/`。
 - 自動搜尋流程：待審核頁「立即搜尋」→ Supabase Edge Function `supabase/functions/trigger-search`（持有 `GH_DISPATCH_TOKEN`，60 分鐘冷卻）→
-  `.github/workflows/auto-search.yml`：`search:export` 匯出既有事件 → claude-code-action（`--model sonnet`，訂閱 token，只允許 WebSearch/WebFetch/Read/Write/Edit）
-  依 `automation/prompt.md` 產生 `automation/out/candidates.json` → `search:import` 用 `src/lib/candidates.ts` 驗證＋去重後寫入 `pending`。
+  `.github/workflows/auto-search.yml`（三段）：`prepare` 匯出既有事件 → `search` 是 6 個分類的 matrix（各自一個 claude-code-action，`--model sonnet`，訂閱 token，
+  只允許 WebSearch/WebFetch/Read/Write/Edit，最多同時 3 個，一個失敗不影響其他）各產生 `candidates.json` → `import` 合併所有分類，用 `src/lib/candidates.ts` 驗證＋去重後寫入 `pending`。
+  拆開跑是因為同一次執行處理 6 類時，Claude 會搜不滿、後面的分類被排擠。
   - 調整搜尋：改 `automation/search-config.json`（分類說明、每類 5–7 次搜尋、`lookaheadMonths`=2、`allowedDomains`=[] 不限網域）或 `automation/prompt.md`。手動執行 workflow 時可用輸入 `lookahead_months` 暫時改搜尋月數。
   - Edge Function 是 Deno，不在 tsconfig 範圍內；改了要到 Supabase 重新部署（JWT 驗證要關閉）。
 

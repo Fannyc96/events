@@ -153,7 +153,7 @@ a:focus-visible {
   min-width: 16px;
   height: 16px;
   border-radius: 8px;
-  background: var(--red);
+  background: var(--primary); /* 待審核件數：主色 */
   color: var(--card);
   font-size: 10px;
   font-weight: 700;

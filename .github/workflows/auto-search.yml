@@ -2,6 +2,7 @@ name: Auto search
 
 # 不排程：由網站待審核頁的「立即搜尋」按鈕（經 Supabase Edge Function）觸發，
 # 或在 GitHub Actions 頁面手動按 Run workflow。
+# 6 個分類各跑一個獨立的 Claude（避免同一次執行裡前面的分類排擠後面的），最後合併、去重、匯入。
 on:
   workflow_dispatch:
     inputs:
@@ -17,13 +18,16 @@ concurrency:
   group: auto-search
   cancel-in-progress: false
 
+env:
+  SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
 jobs:
-  search:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    timeout-minutes: 10
+    outputs:
+      today: ${{ steps.today.outputs.date }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,15 +36,34 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-
       - id: today
         run: echo "date=$(TZ=Asia/Taipei date +%F)" >> "$GITHUB_OUTPUT"
-
       - name: Export existing events
         run: npm run search:export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: existing
+          path: automation/out/existing.json
+          retention-days: 1
+
+  search:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false # 某個分類失敗，其他分類照常
+      max-parallel: 3 # 同時最多 3 個，避免訂閱額度瞬間用太兇
+      matrix:
+        category: [international, allied, adversary, cross_strait, defense, trade_tech]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: existing
+          path: automation/out
 
       # 用 Claude 訂閱額度（claude setup-token 產生的 token），不走 API 計費
-      - name: Search with Claude
+      - name: Search ${{ matrix.category }} with Claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -48,25 +71,43 @@ jobs:
           # 失敗時才看得到 Claude 的錯誤訊息
           show_full_output: true
           prompt: |
-            今天是 ${{ steps.today.outputs.date }}（台灣時間）。
+            今天是 ${{ needs.prepare.outputs.today }}（台灣時間）。
+            這次只負責分類：${{ matrix.category }}。
             ${{ inputs.lookahead_months && format('這次的搜尋範圍改成：今天起到未來 {0} 個月（以此為準，不用設定檔的 lookaheadMonths）。', inputs.lookahead_months) || '' }}
             請讀取 automation/prompt.md，完全照裡面的指示做，最後把結果寫到 automation/out/candidates.json。
           claude_args: |
             --model sonnet
-            --max-turns 120
+            --max-turns 50
             --permission-mode default
             --allowedTools "WebSearch,WebFetch,Read,Write,Edit"
 
-      - name: Import candidates as pending
-        run: npm run search:import
-        env:
-          TODAY: ${{ steps.today.outputs.date }}
-
-      - name: Keep raw output for debugging
+      - name: Keep result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: auto-search-${{ steps.today.outputs.date }}
-          path: automation/out/
+          name: candidates-${{ matrix.category }}
+          path: automation/out/candidates.json
           if-no-files-found: ignore
           retention-days: 14
+
+  import:
+    needs: [prepare, search]
+    # 就算有分類失敗，其他分類的結果照樣匯入
+    if: always() && needs.prepare.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: candidates-*
+          path: automation/out/parts
+      - name: Import candidates as pending
+        run: npm run search:import
+        env:
+          TODAY: ${{ needs.prepare.outputs.today }}
