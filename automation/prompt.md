@@ -7,11 +7,11 @@
 
 ## 步驟
 
-1. 讀 `automation/search-config.json`（分類說明、允許的網域、搜尋次數、搜尋範圍月數）。
+1. 讀 `automation/search-config.json`（分類說明、搜尋次數、搜尋範圍月數）。
 2. 讀 `automation/out/existing.json`：已經在資料庫裡的事件（含已略過的）。**這些不要再提出來**。
 3. 依序處理 6 個分類：`international`、`allied`、`adversary`、`cross_strait`、`defense`、`trade_tech`。每個分類：
-   - 用 WebSearch 搜尋，**每次都要把 `allowed_domains` 設成設定檔的 `allowedDomains` 整份清單**。
-     如果工具回報某些網域無法使用，把那些網域從清單拿掉後繼續，不要因此停下來。
+   - 用 WebSearch 搜尋，**不限網域**（不要設 `allowed_domains`）。來源優先採用官方網站（政府、國際組織、主辦單位）與主要媒體；
+     避免內容農場、論壇、社群貼文。
    - 每個分類**至少搜尋 `minSearchesPerCategory` 次、最多 `maxSearchesPerCategory` 次**。不要搜到一點就停。
    - **每次用不同的關鍵字或子主題**，把分類說明裡的各項分開搜。例如 defense 分開搜「台灣軍演」「美日軍演」「軍購交付」；international 分開搜各個峰會、元首互訪、停火談判。
    - **語言**：台灣相關的分類（`cross_strait`、`defense`）要用**中文關鍵字**搜尋；其他分類中文、英文關鍵字都要用。
@@ -24,7 +24,7 @@
 ## 收錄標準
 
 - 只收**今天（含今天）以後**才發生的事件（結束日 ≥ 今天），不收已經結束的事。
-- 每件都要有來源文章的網址（`source_url`），而且必須是允許網域裡、你真的在搜尋結果中看到的網址。**不可以編造網址或日期。**
+- 每件都要有來源文章的網址（`source_url`），必須是你真的在搜尋結果中看到的網址。**不可以編造網址或日期。**
 - 只收具體、有日期（至少能推到月份或季節）的事件；模糊的趨勢、評論不收。
 - 與 `existing.json` 中同分類、日期相近、內容相同的事件不要重複提出。
 

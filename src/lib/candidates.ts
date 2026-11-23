@@ -33,7 +33,10 @@ function isValidIso(s: string): boolean {
   return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
 }
 
-/** 網址的主機名稱是否屬於允許的網域（含子網域，例：www.reuters.com 屬於 reuters.com） */
+/**
+ * 網址是否為合法的 http(s) 網址，且主機名稱屬於允許的網域（含子網域，例：www.reuters.com 屬於 reuters.com）。
+ * allowedDomains 為空陣列＝不限網域，只檢查網址格式。
+ */
 export function isAllowedSource(url: string, allowedDomains: string[]): boolean {
   let host: string;
   try {
@@ -43,6 +46,7 @@ export function isAllowedSource(url: string, allowedDomains: string[]): boolean 
   } catch {
     return false;
   }
+  if (allowedDomains.length === 0) return true;
   return allowedDomains.some((d) => {
     const dom = d.toLowerCase().replace(/^\.+/, '');
     return host === dom || host.endsWith('.' + dom);
@@ -52,7 +56,7 @@ export function isAllowedSource(url: string, allowedDomains: string[]): boolean 
 /**
  * 驗證並整理 Claude 回傳的一筆候選事件。
  * 規則：分類與日期類型要合法、標題必填、日期格式正確（結束早於開始時對調）、
- * 必須有來源網址且屬於允許的網域、只收今天以後（結束日 ≥ 今天）的事件。
+ * 必須有合法的來源網址（有設網域白名單時還要屬於白名單）、只收今天（含）以後（結束日 ≥ 今天）的事件。
  */
 export function validateCandidate(raw: unknown, today: string, allowedDomains: string[]): ValidateResult {
   if (!raw || typeof raw !== 'object') return { ok: false, reason: '不是物件' };

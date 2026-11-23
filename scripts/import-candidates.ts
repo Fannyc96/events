@@ -6,7 +6,7 @@ import { adminClient, OUT_DIR } from './env';
 const today = process.env.TODAY;
 if (!today) throw new Error('缺少環境變數 TODAY（YYYY-MM-DD）');
 
-const config = JSON.parse(readFileSync('automation/search-config.json', 'utf8')) as { allowedDomains: string[] };
+const config = JSON.parse(readFileSync('automation/search-config.json', 'utf8')) as { allowedDomains?: string[] };
 const file = `${OUT_DIR}/candidates.json`;
 if (!existsSync(file)) throw new Error(`找不到 ${file}：Claude 沒有產生候選清單，請看上一步的紀錄`);
 
@@ -23,7 +23,7 @@ const db = adminClient();
 const { data: existing, error } = await db.from('events').select('category, stakeholder, title, start_date, end_date');
 if (error) throw new Error(error.message);
 
-const plan = planImport(raws, existing as ExistingEvent[], today, config.allowedDomains);
+const plan = planImport(raws, existing as ExistingEvent[], today, config.allowedDomains ?? []);
 
 if (plan.accepted.length) {
   const rows = plan.accepted.map((c) => ({ ...c, status: 'pending', origin: 'auto' }));

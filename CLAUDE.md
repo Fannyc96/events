@@ -27,7 +27,7 @@ npm run search:import   # 另需 TODAY=YYYY-MM-DD
 - 自動搜尋流程：待審核頁「立即搜尋」→ Supabase Edge Function `supabase/functions/trigger-search`（持有 `GH_DISPATCH_TOKEN`，60 分鐘冷卻）→
   `.github/workflows/auto-search.yml`：`search:export` 匯出既有事件 → claude-code-action（`--model sonnet`，訂閱 token，只允許 WebSearch/WebFetch/Read/Write/Edit）
   依 `automation/prompt.md` 產生 `automation/out/candidates.json` → `search:import` 用 `src/lib/candidates.ts` 驗證＋去重後寫入 `pending`。
-  - 調整搜尋：改 `automation/search-config.json`（允許網域、分類說明、次數上限）或 `automation/prompt.md`。
+  - 調整搜尋：改 `automation/search-config.json`（分類說明、每類 5–7 次搜尋、`lookaheadMonths`=2、`allowedDomains`=[] 不限網域）或 `automation/prompt.md`。手動執行 workflow 時可用輸入 `lookahead_months` 暫時改搜尋月數。
   - Edge Function 是 Deno，不在 tsconfig 範圍內；改了要到 Supabase 重新部署（JWT 驗證要關閉）。
 
 ```

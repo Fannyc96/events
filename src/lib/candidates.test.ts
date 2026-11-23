@@ -34,6 +34,12 @@ describe('isAllowedSource', () => {
     expect(isAllowedSource('https://reuters.com/a', DOMAINS)).toBe(true);
     expect(isAllowedSource('https://focustaiwan.tw/politics/1', DOMAINS)).toBe(true);
   });
+  it('網域清單為空＝不限網域，但仍要是合法的 http(s) 網址', () => {
+    expect(isAllowedSource('https://www.consilium.europa.eu/en/x', [])).toBe(true);
+    expect(isAllowedSource('http://example.com', [])).toBe(true);
+    expect(isAllowedSource('javascript:alert(1)', [])).toBe(false);
+    expect(isAllowedSource('not a url', [])).toBe(false);
+  });
   it('拒絕其他網域、假冒網域、非 http 網址', () => {
     expect(isAllowedSource('https://example.com/a', DOMAINS)).toBe(false);
     expect(isAllowedSource('https://notreuters.com/a', DOMAINS)).toBe(false);
