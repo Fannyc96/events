@@ -24,10 +24,14 @@ create table if not exists public.events (
   source_title text,
   source_url text,
   ai_reason text,            -- 自動搜尋時 AI 對日期可靠度的說明，例如「新聞寫明日期」「依往年推估」
+  manual_rank integer,       -- 手動排序（+N 清單長按拖曳）；小的優先，null＝預設排序
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (end_date >= start_date)
 );
+
+-- 舊專案補欄位用（新建的表已經有，這行不會出錯）
+alter table public.events add column if not exists manual_rank integer;
 
 create index if not exists events_range_idx on public.events (status, start_date, end_date);
 

@@ -12,7 +12,7 @@ interface Props {
   scale: Scale;
   gridStyle: CSSProperties;
   onOpenEvent: (id: string) => void;
-  onOpenList: (title: string, ids: string[]) => void;
+  onOpenList: (title: string, ids: string[], reorderable?: boolean) => void;
 }
 
 const span = (cs: number, ce: number) => `${cs + 1} / span ${ce - cs + 1}`;
@@ -21,7 +21,7 @@ export function LaneRow({ cat, layout, cols, scale, gridStyle, onOpenEvent, onOp
   const { band, cards, more } = layout;
 
   const colName = (col: number) =>
-    scale === 'year' ? `${col + 1} 月` : cols[col].top;
+    scale === 'year' ? `${cols[col].sub ? cols[col].sub + ' 年 ' : ''}${cols[col].top}` : cols[col].top;
 
   return (
     <div className="lane" style={{ background: cat.main + '0F' }}>
@@ -75,7 +75,7 @@ export function LaneRow({ cat, layout, cols, scale, gridStyle, onOpenEvent, onOp
             className="more"
             aria-label={`${colName(m.col)}還有 ${m.n} 件，看全部`}
             style={{ gridColumn: m.col + 1, background: m.hasImportant ? 'var(--ink)' : cat.main }}
-            onClick={() => onOpenList(`${cat.name}・${colName(m.col)}（${m.ids.length} 件）`, m.ids)}
+            onClick={() => onOpenList(`${cat.name}・${colName(m.col)}（${m.ids.length} 件）`, m.ids, true)}
           >
             +{m.n}
           </button>

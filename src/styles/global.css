@@ -795,6 +795,45 @@ a:focus-visible {
   flex-direction: column;
   gap: 8px;
 }
+.list-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.link-btn {
+  flex: none;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.list-items .list-item {
+  /* 長按時不要選取文字、不要跳出 iOS 選單 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.15s ease;
+}
+.list-items.dragging .list-item {
+  cursor: grabbing;
+}
+.list-items .list-item.is-dragged {
+  position: relative;
+  z-index: 2;
+  transition: none;
+  box-shadow: 0 8px 20px rgba(28, 28, 28, 0.25);
+}
 .list-item {
   width: 100%;
   min-height: 48px;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { windowOf } from './dates';
-import { compareImportantFirst, isBandEvent, layoutLane } from './layout';
+import { compareEvents, isBandEvent, layoutLane } from './layout';
 import { ev } from './testUtils';
 
 const week = windowOf('week', '2026-11-16'); // 雙週：11/16（一）– 11/29（日），14 欄
-const year = windowOf('year', '2026-01-01');
+const year = windowOf('year', '2026-02-01'); // 2026/1–2026/12
 
 describe('isBandEvent（細條門檻）', () => {
   it('approx 且長度 > 範圍一半才算；剛好一半不算（雙週 14 天，一半 = 7）', () => {
@@ -17,13 +17,59 @@ describe('isBandEvent（細條門檻）', () => {
   });
 });
 
-describe('compareImportantFirst', () => {
+describe('compareEvents', () => {
+  const ids = (xs: ReturnType<typeof ev>[]) => [...xs].sort(compareEvents).map((e) => e.id);
+
   it('重要優先 → 開始日早 → 時間長', () => {
     const a = ev({ id: 'a', start_date: '2026-11-18', end_date: '2026-11-18' });
     const b = ev({ id: 'b', start_date: '2026-11-17', end_date: '2026-11-17' });
     const c = ev({ id: 'c', start_date: '2026-11-17', end_date: '2026-11-20' });
     const d = ev({ id: 'd', start_date: '2026-11-20', end_date: '2026-11-20', important: true });
-    expect([a, b, c, d].sort(compareImportantFirst).map((e) => e.id)).toEqual(['d', 'c', 'b', 'a']);
+    expect(ids([a, b, c, d])).toEqual(['d', 'c', 'b', 'a']);
+  });
+
+  it('同重要性：明確日期優先於大致區間（即使大致區間開始得早）', () => {
+    const approx = ev({ id: 'approx', start_date: '2026-11-01', end_date: '2026-11-30', date_precision: 'approx' });
+    const day = ev({ id: 'day', start_date: '2026-11-20', end_date: '2026-11-20' });
+    expect(ids([approx, day])).toEqual(['day', 'approx']);
+  });
+
+  it('同重要性、同為明確日期：已確定優先於未確定', () => {
+    const unsure = ev({ id: 'unsure', start_date: '2026-11-17', end_date: '2026-11-17', confirmed: false });
+    const sure = ev({ id: 'sure', start_date: '2026-11-19', end_date: '2026-11-19' });
+    expect(ids([unsure, sure])).toEqual(['sure', 'unsure']);
+  });
+
+  it('重要性優先於日期類型與確定與否', () => {
+    const impApproxUnsure = ev({ id: 'imp', start_date: '2026-11-01', end_date: '2026-11-30', date_precision: 'approx', confirmed: false, important: true });
+    const plain = ev({ id: 'plain', start_date: '2026-11-17', end_date: '2026-11-17' });
+    expect(ids([plain, impApproxUnsure])).toEqual(['imp', 'plain']);
+  });
+
+  it('手動排序優先於所有預設規則，數字小的在前', () => {
+    const imp = ev({ id: 'imp', start_date: '2026-11-17', end_date: '2026-11-17', important: true });
+    const r1 = ev({ id: 'r1', start_date: '2026-11-18', end_date: '2026-11-18', manual_rank: 1 });
+    const r0 = ev({ id: 'r0', start_date: '2026-11-19', end_date: '2026-11-19', manual_rank: 0, confirmed: false });
+    expect(ids([imp, r1, r0])).toEqual(['r0', 'r1', 'imp']);
+  });
+
+  it('manual_rank 為 null 或沒有這個欄位，都當作沒有手動排序', () => {
+    const a = ev({ id: 'a', start_date: '2026-11-17', end_date: '2026-11-17', manual_rank: null });
+    const b = ev({ id: 'b', start_date: '2026-11-18', end_date: '2026-11-18' });
+    expect(ids([b, a])).toEqual(['a', 'b']);
+  });
+});
+
+describe('layoutLane 的手動排序', () => {
+  it('手動排在前面的事件占卡片排，原本排前面的被收進 +N', () => {
+    const base = { start_date: '2026-11-18', end_date: '2026-11-18' };
+    const r = layoutLane(
+      [ev({ id: 'imp', ...base, important: true }), ev({ id: 'x', ...base }), ev({ id: 'pick', ...base, manual_rank: 0 })],
+      week,
+      14,
+    );
+    expect(r.cards.map((c) => c.event.id)).toEqual(['pick', 'imp']);
+    expect(r.more[0].ids).toEqual(['pick', 'imp', 'x']);
   });
 });
 
@@ -158,7 +204,8 @@ describe('layoutLane', () => {
       14,
     );
     expect(r.cards.map((c) => c.event.id)).toEqual(['a', 'b']);
-    expect(r.more).toEqual([{ col: 2, n: 1, hasImportant: false, ids: ['band', 'a', 'b', 'c'] }]);
+    // 大致區間排在明確日期之後
+    expect(r.more).toEqual([{ col: 2, n: 1, hasImportant: false, ids: ['a', 'b', 'c', 'band'] }]);
   });
 
   it('超出範圍的那一側標記為切斷', () => {

@@ -37,6 +37,16 @@ export async function setStatus(id: string, status: Status): Promise<void> {
   await updateEvent(id, { status });
 }
 
+/**
+ * 設定手動排序：ids 依新順序寫入 manual_rank = 0, 1, 2…；reset 時全部清成 null（回到預設排序）。
+ */
+export async function setManualOrder(ids: string[], reset = false): Promise<void> {
+  const results = await Promise.all(
+    ids.map((id, i) => client().from('events').update({ manual_rank: reset ? null : i }).eq('id', id)),
+  );
+  for (const r of results) check(r.error);
+}
+
 export async function deleteEvent(id: string): Promise<void> {
   const { error } = await client().from('events').delete().eq('id', id);
   check(error);

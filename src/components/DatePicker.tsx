@@ -13,9 +13,10 @@ interface Props {
 
 const HEADS = ['一', '二', '三', '四', '五', '六', '日'];
 
-/** 小日曆（SPEC 4.5）：雙週＝月曆每列一週（點一列＝從那週開始的兩週）；年＝12 個年份（−4…+7） */
+/** 小日曆（SPEC 4.5）：雙週＝月曆每列一週（點一列＝從那週開始的兩週）；年＝選起始月份（之後連續 12 個月） */
 export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
-  const [cur, setCur] = useState(anchor);
+  // 年：以目前範圍的起始月份那年為準
+  const [cur, setCur] = useState(() => (scale === 'year' ? toIso(windowOf(scale, anchor).start) : anchor));
   const cd = parseDate(cur);
   const py = cd.getFullYear();
   const pm = cd.getMonth();
@@ -24,7 +25,7 @@ export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
 
   const step = (dir: number) => {
     const nx =
-      scale === 'week' ? new Date(py, pm + dir, 1) : new Date(py + 12 * dir, 0, 1);
+      scale === 'week' ? new Date(py, pm + dir, 1) : new Date(py + dir, 0, 1);
     setCur(toIso(nx));
   };
 
@@ -75,17 +76,22 @@ export function DatePicker({ scale, anchor, today, onPick, onClose }: Props) {
       </div>
     );
   } else {
-    const y0 = py - 4;
-    title = `${y0} – ${y0 + 11}`;
+    title = `${py} 年・選起始月份`;
     body = (
       <div className="picker-grid">
-        {Array.from({ length: 12 }, (_, i) => {
-          const yy = y0 + i;
-          const sel = aw.start.getFullYear() === yy;
-          const isT = t.getFullYear() === yy;
+        {Array.from({ length: 12 }, (_, q) => {
+          const sel = aw.start.getFullYear() === py && aw.start.getMonth() === q;
+          const isT = t.getFullYear() === py && t.getMonth() === q;
           return (
-            <button key={yy} className={`picker-cell${isT ? ' today' : ''}`} aria-pressed={sel} onClick={() => onPick(toIso(new Date(yy, 0, 1)))}>
-              {yy}
+            // windowOf('year') 從 anchor 的前一個月開始，所以 anchor 設成起始月的下一個月
+            <button
+              key={q}
+              className={`picker-cell${isT ? ' today' : ''}`}
+              aria-pressed={sel}
+              aria-label={`從 ${py} 年 ${q + 1} 月開始`}
+              onClick={() => onPick(toIso(new Date(py, q + 1, 1)))}
+            >
+              {q + 1} 月
             </button>
           );
         })}

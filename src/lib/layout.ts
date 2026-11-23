@@ -44,10 +44,25 @@ export interface LaneLayout {
   more: MoreLayout[];
 }
 
-/** 重要優先 → 開始日早 → 時間長 */
-export function compareImportantFirst(a: EventRow, b: EventRow): number {
+const hasRank = (e: EventRow) => e.manual_rank !== null && e.manual_rank !== undefined;
+
+/**
+ * 事件排序（決定誰先占卡片排，也是清單的順序）：
+ * 1. 手動排序過的（manual_rank）優先，數字小的在前
+ * 2. 重要 → 3. 明確日期（單日／多日）優先於大致區間 → 4. 已確定優先於未確定
+ * 5. 開始日早 → 6. 時間長
+ */
+export function compareEvents(a: EventRow, b: EventRow): number {
+  const ra = hasRank(a);
+  const rb = hasRank(b);
+  if (ra !== rb) return ra ? -1 : 1;
+  if (ra && rb && a.manual_rank !== b.manual_rank) return a.manual_rank! - b.manual_rank!;
   const imp = Number(b.important) - Number(a.important);
   if (imp) return imp;
+  const precise = Number(a.date_precision === 'approx') - Number(b.date_precision === 'approx');
+  if (precise) return precise;
+  const sure = Number(b.confirmed) - Number(a.confirmed);
+  if (sure) return sure;
   if (a.start_date !== b.start_date) return a.start_date < b.start_date ? -1 : 1;
   return eventDays(b.start_date, b.end_date) - eventDays(a.start_date, a.end_date);
 }
@@ -79,7 +94,7 @@ interface Placed {
 export function layoutLane(events: EventRow[], win: Window, colCount: number): LaneLayout {
   const placed: Placed[] = events
     .filter((e) => overlapsWindow(e, win))
-    .sort(compareImportantFirst)
+    .sort(compareEvents)
     .map((ev) => {
       const sI = columnOf(parseDate(ev.start_date), win);
       const eI = columnOf(parseDate(ev.end_date), win);

@@ -11,7 +11,7 @@ import { Timeline } from './components/Timeline';
 import { Toast } from './components/Toast';
 import { TopBar } from './components/TopBar';
 import { useEvents } from './hooks/useEvents';
-import { createEvent, deleteEvent, setStatus, updateEvent } from './lib/api';
+import { createEvent, deleteEvent, setManualOrder, setStatus, updateEvent } from './lib/api';
 import { shiftAnchor, titleFull, titleShort, todayIso, windowOf } from './lib/dates';
 import { emptyForm, formFromEvent, type FormState } from './lib/form';
 import type { EventInput, EventRow, Scale } from './lib/types';
@@ -20,6 +20,8 @@ type Popover = 'picker' | 'menu' | null;
 interface ListState {
   title: string;
   ids: string[];
+  /** +N 清單可長按拖曳排序 */
+  reorderable: boolean;
 }
 interface FormOpen {
   mode: FormMode;
@@ -66,10 +68,33 @@ export function App() {
     setList(null);
     setDetailId(id);
   }, []);
-  const openList = useCallback((title: string, ids: string[]) => {
+  const openList = useCallback((title: string, ids: string[], reorderable = false) => {
     setDetailId(null);
-    setList({ title, ids });
+    setList({ title, ids, reorderable });
   }, []);
+  const listEvents = useMemo(
+    () => (list ? list.ids.map((id) => byId.get(id)).filter((e): e is EventRow => !!e) : []),
+    [list, byId],
+  );
+  const [orderBusy, setOrderBusy] = useState(false);
+  const saveOrder = useCallback(
+    async (ids: string[], reset: boolean) => {
+      setOrderBusy(true);
+      try {
+        await setManualOrder(ids, reset);
+        await reload();
+        flash(reset ? '已恢復預設順序' : '已更新順序');
+      } catch (e) {
+        flash(`順序儲存失敗：${errText(e)}`, 4000);
+        await reload();
+      } finally {
+        setOrderBusy(false);
+      }
+    },
+    [reload, flash],
+  );
+  const onReorder = useCallback((ids: string[]) => void saveOrder(ids, false), [saveOrder]);
+  const onResetOrder = useCallback((ids: string[]) => void saveOrder(ids, true), [saveOrder]);
   const closeDetail = useCallback(() => setDetailId(null), []);
   const closeList = useCallback(() => setList(null), []);
   const closeForm = useCallback(() => setForm(null), []);
@@ -204,9 +229,13 @@ export function App() {
       {list && (
         <EventList
           title={list.title}
-          events={list.ids.map((id) => byId.get(id)).filter((e): e is EventRow => !!e)}
+          events={listEvents}
+          reorderable={list.reorderable}
+          busy={orderBusy}
           onOpen={openEvent}
           onClose={closeList}
+          onReorder={onReorder}
+          onResetOrder={onResetOrder}
         />
       )}
 

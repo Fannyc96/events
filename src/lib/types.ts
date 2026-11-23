@@ -10,7 +10,7 @@ export type CategoryId =
 export type Precision = 'day' | 'range' | 'approx';
 export type Status = 'pending' | 'approved' | 'dismissed';
 export type Origin = 'manual' | 'auto' | 'import';
-/** week = 雙週：從週一開始的 14 天（這週＋隔週）；year = 1–12 月 */
+/** week = 雙週：從週一開始的 14 天（這週＋隔週）；year = 從 anchor 前一個月起連續 12 個月 */
 export type Scale = 'week' | 'year';
 
 export interface EventRow {
@@ -31,6 +31,8 @@ export interface EventRow {
   source_title: string | null;
   source_url: string | null;
   ai_reason: string | null;
+  /** 手動排序（在 +N 清單長按拖曳設定）；數字小的優先，null＝用預設排序 */
+  manual_rank?: number | null;
   created_at?: string;
   updated_at?: string;
 }

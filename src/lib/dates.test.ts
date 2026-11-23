@@ -30,11 +30,17 @@ describe('windowOf', () => {
     expect(toIso(w.end)).toBe('2027-01-10');
   });
 
-  it('年：1/1 到 12/31', () => {
+  it('年：從當月的前一個月起連續 12 個月（2026/11 → 2026/10–2027/9）', () => {
     const w = windowOf('year', '2026-11-21');
-    expect(toIso(w.start)).toBe('2026-01-01');
-    expect(toIso(w.end)).toBe('2026-12-31');
+    expect(toIso(w.start)).toBe('2026-10-01');
+    expect(toIso(w.end)).toBe('2027-09-30');
     expect(w.days).toBe(365);
+  });
+
+  it('年：1 月時從前一年 12 月開始', () => {
+    const w = windowOf('year', '2027-01-15');
+    expect(toIso(w.start)).toBe('2026-12-01');
+    expect(toIso(w.end)).toBe('2027-11-30');
   });
 });
 
@@ -44,6 +50,7 @@ describe('shiftAnchor', () => {
     expect(shiftAnchor('week', '2026-11-21', -1)).toBe('2026-11-07');
     expect(toIso(windowOf('week', shiftAnchor('week', '2026-11-21', 1)).start)).toBe('2026-11-30');
     expect(shiftAnchor('year', '2026-11-21', 1)).toBe('2027-11-01');
+    expect(toIso(windowOf('year', shiftAnchor('year', '2026-11-21', -1)).start)).toBe('2025-10-01');
   });
 });
 
@@ -54,7 +61,7 @@ describe('titleShort', () => {
     expect(titleShort(windowOf('week', '2026-12-02'))).toBe('11/30–12/13');
   });
   it('年', () => {
-    expect(titleShort(windowOf('year', '2026-11-18'))).toBe('2026');
+    expect(titleShort(windowOf('year', '2026-11-18'))).toBe('26/10–27/9');
   });
 });
 
@@ -68,20 +75,25 @@ describe('buildColumns', () => {
     expect(cols[13]).toMatchObject({ top: '11/29', sub: '日', weekend: true });
   });
 
-  it('年視圖：12 個月，今天所在月份', () => {
-    const cols = buildColumns(windowOf('year', '2026-01-01'), '2026-11-21');
-    expect(cols.map((c) => c.top)[10]).toBe('11月');
-    expect(cols.findIndex((c) => c.today)).toBe(10);
-    expect(buildColumns(windowOf('year', '2027-01-01'), '2026-11-21').some((c) => c.today)).toBe(false);
+  it('年視圖：12 個月從 10 月開始，第一欄和 1 月標年份，今天所在月份', () => {
+    const cols = buildColumns(windowOf('year', '2026-11-21'), '2026-11-21');
+    expect(cols.map((c) => c.top)).toEqual(['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月']);
+    expect(cols[0].sub).toBe('2026');
+    expect(cols[3].sub).toBe('2027');
+    expect(cols[1].sub).toBe('');
+    expect(cols.findIndex((c) => c.today)).toBe(1);
+    expect(buildColumns(windowOf('year', '2028-01-01'), '2026-11-21').some((c) => c.today)).toBe(false);
   });
 });
 
 describe('columnOf', () => {
-  it('年視圖：前一年 -1、後一年 12', () => {
-    const w = windowOf('year', '2026-06-01');
-    expect(columnOf(parseDate('2025-12-31'), w)).toBe(-1);
-    expect(columnOf(parseDate('2026-03-15'), w)).toBe(2);
-    expect(columnOf(parseDate('2027-01-01'), w)).toBe(12);
+  it('年視圖：以起始月份為 0，跨年連續計算；範圍外為負數或 ≥ 12', () => {
+    const w = windowOf('year', '2026-11-01'); // 2026/10–2027/9
+    expect(columnOf(parseDate('2026-09-30'), w)).toBe(-1);
+    expect(columnOf(parseDate('2026-10-15'), w)).toBe(0);
+    expect(columnOf(parseDate('2027-01-01'), w)).toBe(3);
+    expect(columnOf(parseDate('2027-09-30'), w)).toBe(11);
+    expect(columnOf(parseDate('2027-10-01'), w)).toBe(12);
   });
 });
 

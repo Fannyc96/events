@@ -43,6 +43,8 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 ## 慣例
 - **候選事件的驗證與去重只寫在 `src/lib/candidates.ts`**，改規則要一起改 `candidates.test.ts`。
 - **排列規則只寫在 `src/lib/layout.ts`**（細條、兩排卡片、+N、切斷），改規則時要一起改 `layout.test.ts`。
+- 排序比較函式是 `layout.ts` 的 `compareEvents`（手動 `manual_rank` → 重要 → 明確日期 → 已確定 → 開始日 → 長度），卡片排與清單都用它。手動排序在 `EventList`（+N 清單長按拖曳，觸控用原生 touch 事件＋`passive:false` 才能擋捲動）→ `api.setManualOrder`。
+- 年視圖＝`dates.ts` 的 `windowOf('year')`：anchor 前一個月起 12 個月；`columnOf` 以起始月為 0 連續計算。電腦版年視圖欄寬＝`max(104, (可視寬 − 30) / 12)`（`Timeline` 用 ResizeObserver）。
 - 日期一律用 `YYYY-MM-DD` 字串，轉 Date 用 `parseDate()`（本地午夜），不要用 `new Date('2026-11-21')`（會變成 UTC）。「今天」以裝置本地時間為準。
 - 分類的順序與顏色只在 `src/lib/categories.ts`；中性色在 `global.css` 的 `:root`。顏色都取自 nipponcolors.com。
 - 樣式：固定的東西寫 class，依資料變動的值（grid-column、分類色）才用 inline style。

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORIES } from '../lib/categories';
 import { buildColumns, type Window } from '../lib/dates';
 import { layoutLane } from '../lib/layout';
@@ -10,7 +10,7 @@ interface Props {
   today: string;
   events: EventRow[];
   onOpenEvent: (id: string) => void;
-  onOpenList: (title: string, ids: string[]) => void;
+  onOpenList: (title: string, ids: string[], reorderable?: boolean) => void;
 }
 
 const LABEL_W = 30;
@@ -20,7 +20,18 @@ const GAP = 4;
 export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props) {
   const cols = useMemo(() => buildColumns(win, today), [win, today]);
   const n = cols.length;
-  const colW = 104;
+  // 年視圖：螢幕夠寬（電腦）時 12 欄平均填滿寬度；手機維持每欄 104px、左右捲動
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [viewW, setViewW] = useState(0);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setViewW(el.clientWidth));
+    ro.observe(el);
+    setViewW(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+  const colW = win.scale === 'year' ? Math.max(104, (viewW - LABEL_W) / n) : 104;
   const gridW = n * colW;
   const cw = (gridW - PAD * 2 - (n - 1) * GAP) / n; // 實際每欄內容寬
   const todayIdx = cols.findIndex((c) => c.today);
@@ -46,7 +57,6 @@ export function Timeline({ win, today, events, onOpenEvent, onOpenList }: Props)
     win.scale === 'week' ? Array.from({ length: n / 7 - 1 }, (_, i) => LABEL_W + PAD + (i + 1) * 7 * (cw + GAP) - GAP / 2) : [];
 
   // 切換範圍或日期時：雙週從週一（最左邊）開始；年視圖捲到今天的前一欄，今天不在範圍內就捲到最左邊
-  const scrollRef = useRef<HTMLDivElement>(null);
   const key = `${win.scale}|${win.start.getTime()}`;
   useLayoutEffect(() => {
     const el = scrollRef.current;
