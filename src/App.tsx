@@ -76,25 +76,19 @@ export function App() {
     () => (list ? list.ids.map((id) => byId.get(id)).filter((e): e is EventRow => !!e) : []),
     [list, byId],
   );
-  const [orderBusy, setOrderBusy] = useState(false);
-  const saveOrder = useCallback(
-    async (ids: string[], reset: boolean) => {
-      setOrderBusy(true);
+  const onReorder = useCallback(
+    async (ids: string[]) => {
       try {
-        await setManualOrder(ids, reset);
+        await setManualOrder(ids);
         await reload();
-        flash(reset ? '已恢復預設順序' : '已更新順序');
+        flash('已更新順序');
       } catch (e) {
         flash(`順序儲存失敗：${errText(e)}`, 4000);
         await reload();
-      } finally {
-        setOrderBusy(false);
       }
     },
     [reload, flash],
   );
-  const onReorder = useCallback((ids: string[]) => void saveOrder(ids, false), [saveOrder]);
-  const onResetOrder = useCallback((ids: string[]) => void saveOrder(ids, true), [saveOrder]);
   const closeDetail = useCallback(() => setDetailId(null), []);
   const closeList = useCallback(() => setList(null), []);
   const closeForm = useCallback(() => setForm(null), []);
@@ -231,11 +225,9 @@ export function App() {
           title={list.title}
           events={listEvents}
           reorderable={list.reorderable}
-          busy={orderBusy}
           onOpen={openEvent}
           onClose={closeList}
-          onReorder={onReorder}
-          onResetOrder={onResetOrder}
+          onReorder={(ids) => void onReorder(ids)}
         />
       )}
 

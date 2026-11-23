@@ -795,24 +795,6 @@ a:focus-visible {
   flex-direction: column;
   gap: 8px;
 }
-.list-hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-  color: var(--ink-2);
-}
-.link-btn {
-  flex: none;
-  border: none;
-  background: none;
-  padding: 4px 0;
-  font-size: 13px;
-  color: var(--primary);
-  text-decoration: underline;
-  cursor: pointer;
-}
 .list-items {
   display: flex;
   flex-direction: column;

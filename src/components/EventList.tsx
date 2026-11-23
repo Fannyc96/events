@@ -9,13 +9,10 @@ interface Props {
   events: EventRow[];
   /** 可以長按拖曳調整順序（+N 清單） */
   reorderable: boolean;
-  busy: boolean;
   onOpen: (id: string) => void;
   onClose: () => void;
   /** 依新順序存檔 */
   onReorder: (ids: string[]) => void;
-  /** 清除手動排序 */
-  onResetOrder: (ids: string[]) => void;
 }
 
 const LONG_PRESS_MS = 400;
@@ -39,7 +36,7 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 }
 
 /** 點 +N 或合併細條打開的清單。+N 清單可長按卡片、上下拖曳調整順序。 */
-export function EventList({ title, events, reorderable, busy, onOpen, onClose, onReorder, onResetOrder }: Props) {
+export function EventList({ title, events, reorderable, onOpen, onClose, onReorder }: Props) {
   const sorted = useMemo(() => [...events].sort(compareEvents), [events]);
   const [order, setOrder] = useState(sorted);
   useEffect(() => setOrder(sorted), [sorted]);
@@ -137,22 +134,11 @@ export function EventList({ title, events, reorderable, busy, onOpen, onClose, o
     };
   }, [reorderable, onReorder]);
 
-  const hasManual = events.some((e) => e.manual_rank !== null && e.manual_rank !== undefined);
   const GAP = 8;
 
   return (
     <Sheet label={title} head={<h2>{title}</h2>} onClose={onClose} maxHeight="75%">
       <div className="list-body">
-        {reorderable && (
-          <div className="list-hint">
-            <span>{busy ? '儲存順序中…' : '長按卡片可上下拖曳，調整在時間軸上的優先順序'}</span>
-            {hasManual && !busy && (
-              <button className="link-btn" onClick={() => onResetOrder(order.map((e) => e.id))}>
-                恢復預設
-              </button>
-            )}
-          </div>
-        )}
         <div ref={listRef} className={`list-items${drag ? ' dragging' : ''}`}>
           {order.map((e, i) => {
             // 拖曳中：被拖的卡片跟著手指；其他卡片讓出位置
