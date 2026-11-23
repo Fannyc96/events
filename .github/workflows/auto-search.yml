@@ -4,6 +4,11 @@ name: Auto search
 # 或在 GitHub Actions 頁面手動按 Run workflow。
 on:
   workflow_dispatch:
+    inputs:
+      lookahead_months:
+        description: '搜尋未來幾個月（留空＝用 search-config.json 的 lookaheadMonths）'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -44,10 +49,11 @@ jobs:
           show_full_output: true
           prompt: |
             今天是 ${{ steps.today.outputs.date }}（台灣時間）。
+            ${{ inputs.lookahead_months && format('這次的搜尋範圍改成：今天起到未來 {0} 個月（以此為準，不用設定檔的 lookaheadMonths）。', inputs.lookahead_months) || '' }}
             請讀取 automation/prompt.md，完全照裡面的指示做，最後把結果寫到 automation/out/candidates.json。
           claude_args: |
             --model sonnet
-            --max-turns 60
+            --max-turns 120
             --permission-mode default
             --allowedTools "WebSearch,WebFetch,Read,Write,Edit"
 
