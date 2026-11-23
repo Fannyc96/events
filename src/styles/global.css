@@ -24,6 +24,9 @@ body,
 #root {
   margin: 0;
   height: 100%;
+  /* 整個頁面不能上下滑（含 iPhone 的回彈）；只有面板、待審核清單內部可以捲 */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -32,7 +35,9 @@ body {
   font-family: 'Noto Sans TC', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   -webkit-text-size-adjust: 100%;
-  overscroll-behavior: none;
+  /* iOS Safari：把 body 固定住，才能完全擋掉整頁回彈 */
+  position: fixed;
+  inset: 0;
 }
 
 a {
@@ -160,7 +165,10 @@ a:focus-visible {
 .tl-scroll {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  /* 時間軸只能左右捲；上下固定（6 列永遠放得下），也不要回彈 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: none;
   background: var(--card);
   display: flex;
   flex-direction: column;
@@ -701,6 +709,7 @@ a:focus-visible {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain; /* 捲到底不要帶動後面的頁面 */
 }
 .sheet-foot {
   flex: none;
@@ -936,6 +945,7 @@ a:focus-visible {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .review-list {
   padding: 20px 16px 24px;
