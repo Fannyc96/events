@@ -1,5 +1,5 @@
 import { useSearchRun } from '../hooks/useSearchRun';
-import { categoryOf, PRECISION_TEXT } from '../lib/categories';
+import { categoryOf } from '../lib/categories';
 import { statusText } from '../lib/searchTrigger';
 import type { EventRow } from '../lib/types';
 import { TimelineIcon } from './Icons';
@@ -52,26 +52,37 @@ export function ReviewPage({ pending, busyId, onBack, onSkip, onEdit, onApprove,
                   <span className="ai-tag">AI 建議</span>
                   {p.ai_reason && <span style={{ color: 'var(--ink-2)' }}>{p.ai_reason}</span>}
                 </div>
+                {/* 沿用事件詳情的樣式：分類在標題上方 → 標題 → 狀態 tag → 日期、地點 */}
+                <span className="detail-cat" style={{ color: cat.main }}>
+                  <span className="swatch" style={{ background: cat.main }} />
+                  {cat.name}
+                </span>
                 <h2>
-                  {p.stakeholder && <span className="who-tag" style={{ background: 'var(--card)', border: `2px solid ${cat.light}` }}>
+                  {p.stakeholder && (
+                    <span className="who-tag" style={{ background: 'var(--card)', border: `2px solid ${cat.light}` }}>
                       {p.stakeholder}
-                    </span>}
+                    </span>
+                  )}
                   {p.title}
                 </h2>
+                <div className="tags">
+                  {/* 確定／一般也顯示：白底有框；未確定：虛線框；重要：分類淺色底 */}
+                  <span className="tag" style={{ border: `1px ${p.confirmed ? 'solid' : 'dashed'} ${cat.main}`, background: 'var(--card)' }}>
+                    {p.confirmed ? '已確定' : '未確定'}
+                  </span>
+                  {p.important ? (
+                    <span className="tag" style={{ background: cat.light, border: `1px solid ${cat.light}`, fontWeight: 700 }}>
+                      重要
+                    </span>
+                  ) : (
+                    <span className="tag" style={{ border: `1px solid ${cat.main}`, background: 'var(--card)' }}>
+                      一般
+                    </span>
+                  )}
+                </div>
                 <dl className="dl">
                   <dt>日期</dt>
-                  <dd>
-                    <strong>{p.date_label}</strong> · {PRECISION_TEXT[p.date_precision]}
-                  </dd>
-                  <dt>分類</dt>
-                  <dd style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className="swatch" style={{ width: 10, height: 10, background: cat.main }} />
-                    {cat.name}
-                  </dd>
-                  <dt>狀態</dt>
-                  <dd>
-                    {p.confirmed ? '已確定' : '未確定'} · {p.important ? '重要' : '一般'}
-                  </dd>
+                  <dd style={{ fontWeight: 700 }}>{p.date_label}</dd>
                   <dt>地點</dt>
                   <dd>{p.location || '—'}</dd>
                 </dl>
