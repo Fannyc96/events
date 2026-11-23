@@ -11,8 +11,10 @@ drop policy if exists "anyone inserts" on public.events;
 drop policy if exists "anyone updates" on public.events;
 drop policy if exists "anyone deletes" on public.events;
 
+-- 讀取開放所有狀態：Postgres 會要求 UPDATE 後的資料列也符合 SELECT 規則，
+-- 若只開放 approved/pending，「略過」（改成 dismissed）會被 RLS 擋下。網站本身只抓 approved/pending。
 create policy "anyone reads visible" on public.events
-  for select using (status in ('approved', 'pending'));
+  for select using (true);
 create policy "anyone inserts" on public.events
   for insert with check (true);
 create policy "anyone updates" on public.events

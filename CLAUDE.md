@@ -61,7 +61,7 @@ src/styles/global.css  所有 CSS；SPEC 第 3 節的中性色是 CSS 變數
 
 ## 已知取捨
 - 權限完全開放：任何知道網址的人都能改或刪資料（使用者的決定）。
-- `dismissed` 的事件前端讀不到，只留給自動搜尋去重用（service role 不受 RLS 限制）。
+- `dismissed` 的事件 API 讀得到（RLS 的 SELECT 必須開放，否則「略過」會被擋），但網站 `fetchEvents` 只抓 approved / pending；自動搜尋用它去重。
 - 待審核卡片不顯示新聞摘要（資料表沒有這個欄位，使用者決定不加）。
 - 「立即搜尋」任何人都能按（使用者的決定），只靠「進行中不能按、60 分鐘冷卻」限制用量。
 - `CLAUDE_CODE_OAUTH_TOKEN` 綁定使用者個人的 Claude 訂閱，搜尋會占用訂閱的使用額度。

@@ -32,7 +32,7 @@ create table if not exists public.events (
 create index if not exists events_range_idx on public.events (status, start_date, end_date);
 
 -- 權限（不需登入）：任何人都能看已核准與待審核的事件，也能新增、編輯、刪除。
--- dismissed（已略過）前端看不到，只給自動搜尋腳本（service role，不受 RLS 限制）拿來去重。
+-- dismissed（已略過）API 讀得到，但網站只顯示 approved / pending；自動搜尋拿它來去重。
 -- ⚠️ 取捨：任何知道網址的人都能改或刪資料。
 alter table public.events enable row level security;
 
@@ -43,8 +43,10 @@ drop policy if exists "anyone inserts" on public.events;
 drop policy if exists "anyone updates" on public.events;
 drop policy if exists "anyone deletes" on public.events;
 
+-- 讀取開放所有狀態：Postgres 會要求 UPDATE 後的資料列也符合 SELECT 規則，
+-- 若只開放 approved/pending，「略過」（改成 dismissed）會被 RLS 擋下。網站本身只抓 approved/pending。
 create policy "anyone reads visible" on public.events
-  for select using (status in ('approved', 'pending'));
+  for select using (true);
 create policy "anyone inserts" on public.events
   for insert with check (true);
 create policy "anyone updates" on public.events
